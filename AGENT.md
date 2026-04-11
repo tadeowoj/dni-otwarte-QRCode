@@ -34,13 +34,19 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Po rejestracji wymagane jest ustawienie PIN w modalu; dopiero po sukcesie tworzy sie sesja i wejscie do dashboardu.
 - Backend ma nowe akcje `set_user_pin` i `login_user`; konto bez PIN zwraca `PIN_NOT_SET`.
 - Arkusz `Uczestnicy` wymaga kolumny `pin`.
-- Publiczny deployment Apps Script pod URL używanym przez frontend jest zaktualizowany do wersji `@7` (zawiera `set_user_pin` i `login_user`).
+- Publiczny deployment Apps Script pod URL używanym przez frontend jest zaktualizowany do wersji `@9` (zawiera dropdown szkol i backendowa walidacje whitelisty `school_name`).
+- Formularz rejestracji uczestnika ma zamknieta liste szkol podstawowych (`select` z 16 pozycjami), zamiast dowolnego pola tekstowego.
+- Backend waliduje `school_name` po whitelistcie 16 szkol i zwraca `INVALID_SCHOOL_NAME` dla wartosci spoza listy.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
 - Dodano modal ustawiania PIN po udanej rejestracji z walidacja `^\d{4}$` i potwierdzeniem PIN.
 - Rozszerzono backend (`API.js`, `Code.js`) o akcje `set_user_pin` oraz `login_user` i kody bledow `INVALID_PIN_FORMAT`, `INVALID_CREDENTIALS`, `PIN_NOT_SET`.
 - Zaktualizowano dokumentacje schematu (`schema/database.md`) o pole `pin` w arkuszu `Uczestnicy`.
+- Zamieniono pole `Szkola podstawowa` na dropdown (`select`) z lista 16 szkol w `frontend/index.html`.
+- Dodano frontendowa walidacje braku wyboru szkoly (toast) oraz backendowa whitelista dla `school_name` z bledem `INVALID_SCHOOL_NAME`.
+- Rozjasniono placeholdery formularza rejestracyjnego, zeby nie mylic ich z wpisana wartoscia.
+- Zaktualizowano URL backendu Apps Script do deploymentu `@9` w `frontend/main.js` i `frontend/admin.js`.
 
 # Operacyjne zasady wdrozeniowe
 - Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
@@ -50,6 +56,9 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 # Otwarte TODO
 - W arkuszu `Uczestnicy` dodac fizycznie kolumne `pin` w naglowkach (zgodnie z `schema/database.md`).
 - Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
+- Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
+- Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Po zmianach backendu wykonac `clasp push` i sprawdzic publiczny deployment Apps Script.
 - Po zmianach frontendu wykonac `npm run build` i wdrozenie na GitHub Pages.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z nowego deploymentu Apps Script `@9`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENT.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
