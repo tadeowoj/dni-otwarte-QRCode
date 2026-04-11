@@ -1,10 +1,22 @@
 import { defineConfig } from 'vite';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  base: '/', // Główna domena qr.zsoiz-czyzew.pl
+  base: '/', // Glowna domena qr.zsoiz-czyzew.pl
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        admin: resolve(__dirname, 'admin.html')
+      }
+    }
+  },
 
   server: {
-    host: true, // Słuchaj na wszystkich adresach lokalnych (umożliwia test ze smartfona pzez wi-fi)
+    host: true, // Sluchaj na wszystkich adresach lokalnych (umozliwia test ze smartfona po wi-fi)
     port: 3000
   }
 });
