@@ -1,0 +1,19 @@
+{
+  "name": "dni-otwarte-qrcode-backend",
+  "version": "1.0.0",
+  "description": "Backend for QR Code contest using Google Apps Script",
+  "main": "index.js",
+  "scripts": {
+    "login": "clasp login",
+    "create": "clasp create --type sheets --rootDir ./backend",
+    "push": "clasp push",
+    "pull": "clasp pull"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83"
+  },
+  "dependencies": {
+    "clasp": "^1.0.0"
+  }
+}
