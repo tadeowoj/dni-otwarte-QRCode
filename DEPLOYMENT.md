@@ -20,7 +20,7 @@ Przy użyciu narzędzia `clasp` (CLI od Google) możemy przepchnąć kod prosto 
 ## Opcja B (Klasyczne przekopiowanie - Banalnie proste dla MVP)
 
 1. Wejdź na swój Google Drive. Utwórz nowy **Arkusz Kalkulacyjny Google**.
-2. Wklej precyzyjnie 4 nazwy arkuszy i nagłówki tak jak opisano w `schema/database.md`. Wygeneruje on darmową bazę danych!
+2. Wklej precyzyjnie 5 nazw arkuszy i nagłówki tak jak opisano w `schema/database.md` (w tym nowy arkusz `Nauczyciele`). To będzie Twoja baza danych.
 3. W górnym menu Google Sheets wejdź w **Rozszerzenia -> Apps Script**.
 4. W otwartym edytorze kodu usuń domyślną treść z pliku `Kod.gs` (możesz też zmienić mu nazwę na `Code.gs`) i skopiuj całą zawartość z utworzonego u Ciebie lokalnie wpisu `backend/Code.js`.
 5. Użyj przycisku z plusem (`+`) -> **Skrypt**, i stwórz dwa nowe pliki:

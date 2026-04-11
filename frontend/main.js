@@ -5,7 +5,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TK
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 
 const STATE = {
-  participantId: localStorage.getItem("qr_participant_id") || null,
+  userId: localStorage.getItem("qr_user_id") || localStorage.getItem("qr_participant_id") || null,
+  userRole: localStorage.getItem("qr_user_role") || (localStorage.getItem("qr_participant_id") ? "participant" : null),
   nickname: localStorage.getItem("qr_nickname") || null,
   stations: [],
   pendingScanCode: new URLSearchParams(window.location.search).get("code"),
@@ -18,6 +19,7 @@ const STATE = {
 const views = {
   loader: document.getElementById("view-loader"),
   register: document.getElementById("view-register"),
+  teacher: document.getElementById("view-teacher"),
   dashboard: document.getElementById("view-dashboard"),
   scanResult: document.getElementById("view-scan-result"),
   complete: document.getElementById("view-complete")
@@ -92,20 +94,30 @@ async function fetchAPI(action, payload) {
   }
 }
 
-function startParticipantSession(participantId, nickname) {
-  STATE.participantId = participantId;
+function startUserSession(role, userId, nickname) {
+  STATE.userRole = role;
+  STATE.userId = userId;
   STATE.nickname = nickname;
-  localStorage.setItem("qr_participant_id", participantId);
+  localStorage.setItem("qr_user_role", role);
+  localStorage.setItem("qr_user_id", userId);
+  if (role === "participant") {
+    localStorage.setItem("qr_participant_id", userId);
+  } else {
+    localStorage.removeItem("qr_participant_id");
+  }
   localStorage.setItem("qr_nickname", nickname);
 }
 
-function logoutParticipant() {
+function logoutUser() {
   const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
+  localStorage.removeItem("qr_user_role");
+  localStorage.removeItem("qr_user_id");
   localStorage.removeItem("qr_participant_id");
   localStorage.removeItem("qr_nickname");
-  STATE.participantId = null;
+  STATE.userId = null;
+  STATE.userRole = null;
   STATE.nickname = null;
   STATE.pendingScanCode = null;
 
@@ -118,12 +130,17 @@ function logoutParticipant() {
 // INICJALIZACJA I LOGIKA GLOWNA
 // =========================================================================
 async function initApp() {
-  if (!STATE.participantId) {
+  if (!STATE.userId) {
     showRegisterForm();
     if (STATE.pendingScanCode) {
       showToast("Aby zeskanowac kod, musisz sie najpierw zalogowac lub zarejestrowac.", true);
     }
     showView("register");
+    return;
+  }
+
+  if (STATE.userRole === "teacher") {
+    renderTeacherScreen();
     return;
   }
 
@@ -232,7 +249,9 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     return;
   }
 
-  startParticipantSession(res.data.participant_id, res.data.nickname);
+  const role = res.data.role || "participant";
+  const userId = role === "teacher" ? res.data.teacher_id : res.data.participant_id;
+  startUserSession(role, userId, res.data.nickname);
   showToast("Zalogowano pomyslnie!");
   await initApp();
 });
@@ -279,7 +298,7 @@ document.getElementById("pin-setup-form").addEventListener("submit", async (e) =
     return;
   }
 
-  startParticipantSession(STATE.pendingRegistration.participantId, STATE.pendingRegistration.nickname);
+  startUserSession("participant", STATE.pendingRegistration.participantId, STATE.pendingRegistration.nickname);
   STATE.pendingRegistration = null;
   closePinModal();
   showToast("PIN ustawiony. Startujemy!");
@@ -293,14 +312,17 @@ async function loadDashboard() {
   showView("loader");
 
   const [profileRes, stationsRes] = await Promise.all([
-    fetchAPI("get_profile", { participant_id: STATE.participantId }),
+    fetchAPI("get_profile", { participant_id: STATE.userId }),
     fetchAPI("get_stations", {})
   ]);
 
   if (profileRes.status === "error") {
     localStorage.removeItem("qr_participant_id");
     localStorage.removeItem("qr_nickname");
-    STATE.participantId = null;
+    localStorage.removeItem("qr_user_id");
+    localStorage.removeItem("qr_user_role");
+    STATE.userId = null;
+    STATE.userRole = null;
     showToast(profileRes.message, true);
     showView("register");
     return;
@@ -357,7 +379,7 @@ async function handleScanCode(code) {
   showView("loader");
 
   const res = await fetchAPI("scan_code", {
-    participant_id: STATE.participantId,
+    participant_id: STATE.userId,
     station_code: code
   });
 
@@ -391,7 +413,11 @@ document.getElementById("btn-back-dash").addEventListener("click", () => {
 });
 
 document.getElementById("btn-logout").addEventListener("click", () => {
-  logoutParticipant();
+  logoutUser();
+});
+
+document.getElementById("btn-logout-teacher").addEventListener("click", () => {
+  logoutUser();
 });
 
 // =========================================================================
@@ -401,6 +427,11 @@ function renderCompleteScreen(participant) {
   document.getElementById("comp-nickname").innerText = participant.nickname;
   document.getElementById("comp-school").innerText = participant.school_name;
   showView("complete");
+}
+
+function renderTeacherScreen() {
+  document.getElementById("teacher-nickname").innerText = STATE.nickname || "Nauczyciel";
+  showView("teacher");
 }
 
 // =========================================================================
