@@ -147,7 +147,6 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
 .start-card {
   position: relative;
   overflow: hidden;
-  background: #e6e7e9;
 }
 
 .start-hero {
@@ -157,14 +156,13 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
   text-align: left;
   gap: 10px;
   margin-bottom: 18px;
+  padding-right: 126px;
 }
 
 .start-hero-headline {
-  width: 100%;
+  min-height: 70px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: flex-start;
 }
 
 .start-hero .title {
@@ -177,19 +175,23 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
 }
 
 .hero-logo-shell {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
   width: auto;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 2px;
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.75), rgba(22, 163, 74, 0.75));
   box-shadow: 0 10px 20px rgba(76, 29, 149, 0.18);
-  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .hero-logo-video {
   display: block;
   width: auto;
-  height: clamp(40px, 5vw, 54px);
-  border-radius: 10px;
+  height: clamp(50px, 6.25vw, 68px);
+  border-radius: 12px;
   background: #f8faff;
 }
   
@@ -491,9 +493,12 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
   }
 
   @media (max-width: 520px) {
+    .start-hero {
+      padding-right: 102px;
+    }
+
     .start-hero-headline {
-      align-items: flex-start;
-      gap: 10px;
+      min-height: 52px;
     }
 
     .start-hero .title {
@@ -502,6 +507,11 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     }
 
     .hero-logo-video {
-      height: 38px;
+      height: 48px;
+    }
+
+    .hero-logo-shell {
+      top: 16px;
+      right: 16px;
     }
   }

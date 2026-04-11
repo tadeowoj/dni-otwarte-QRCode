@@ -40,7 +40,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Widok rejestracji (`frontend/index.html`) ma sekcje hero z loopowanym filmem logo (`/img/logo.webm`) nad naglowkiem "Witaj w grze!".
 - Asset filmu logo jest dostepny przez Vite z `frontend/public/img/logo.webm` (kopiowany z repo `img/logo.webm`).
 - W hero rejestracji logo video zostalo zmniejszone i ustawione po prawej stronie naglowka "Witaj w grze!", z wysokoscia dopasowana do wysokosci naglowka.
-- Tlo karty formularza rejestracji (`.start-card`) zostalo ustawione na kolor `#e6e7e9`.
+- Logo video w hero rejestracji jest przypiete absolutnie do prawego gornego rogu `.start-card`, powiekszone o okolo 25% i nie wplywa na pozycjonowanie formularza.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -54,7 +54,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Dodano w `frontend/index.html` sekcje hero z autoplay/loop/muted video (`/img/logo.webm`) i nowy styling (`frontend/style.css`) dla profesjonalnej ekspozycji logo.
 - Dodano publiczny asset `frontend/public/img/logo.webm` oraz potwierdzono lokalny build frontendu (`npm run build`) po zmianie.
 - Przestawiono layout hero: naglowek i logo sa w jednym rzedzie, a rozmiar video zostal doskalowany do wysokosci naglowka (desktop + mobile).
-- Zmieniono tlo formularza rejestracji na `#e6e7e9` w `frontend/style.css`.
+- Ustawiono logo jako element absolutny w prawym gornym rogu karty i zwiekszono jego skale (`clamp(50px, 6.25vw, 68px)`), zachowujac stabilny uklad pozostalych elementow.
 
 # Operacyjne zasady wdrozeniowe
 - Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
