@@ -106,6 +106,13 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   btn.disabled = false;
 
   if (res.status === "error") {
+    if (res.error_code === "DUPLICATE_PARTICIPANT") {
+      showToast(res.message || "Takie konto już istnieje. Sprawdź dane i spróbuj ponownie.", true);
+      const nickInput = document.getElementById('reg-nick');
+      nickInput.focus();
+      nickInput.select();
+      return;
+    }
     showToast(res.message, true);
     return;
   }
