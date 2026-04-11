@@ -75,6 +75,10 @@ const API = {
     return /^\d{4}$/.test(this.normalizePin(pin));
   },
 
+  isTeacherActive(teacher) {
+    return teacher && (teacher.is_active === true || teacher.is_active === "TRUE" || teacher.is_active === "true" || teacher.is_active === 1 || teacher.is_active === "1");
+  },
+
   // M1: Rejestracja Uczestnika
   registerParticipant(payload) {
     const safePayload = payload || {};
@@ -188,19 +192,56 @@ const API = {
       return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
     }
 
+    const comparableNickname = this.normalizeComparableNickname(nickname);
     const participants = DB.getRowsAsObjects("Uczestnicy");
-    const participant = participants.find((p) => this.normalizeNickname(p.nickname) === nickname);
+    const teachers = DB.getRowsAsObjects("Nauczyciele");
 
-    if (!participant) {
+    const participantMatches = participants.filter((p) => this.normalizeComparableNickname(p.nickname) === comparableNickname);
+    const teacherMatches = teachers.filter((t) => this.normalizeComparableNickname(t.nickname) === comparableNickname);
+
+    if (participantMatches.length + teacherMatches.length === 0) {
       return this.error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
     }
 
-    const storedPin = this.normalizePin(participant.pin);
+    if (participantMatches.length + teacherMatches.length > 1) {
+      return this.error("Ten nick wystepuje wiecej niz raz. Popros administratora o poprawke.", "DUPLICATE_NICKNAME");
+    }
+
+    if (participantMatches.length === 1) {
+      const participant = participantMatches[0];
+      const storedPin = this.normalizePin(participant.pin);
+
+      if (!storedPin) {
+        return this.error(
+          "To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.",
+          "PIN_NOT_SET"
+        );
+      }
+
+      if (storedPin !== pin) {
+        return this.error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+      }
+
+      return this.success({
+        message: "Zalogowano pomyslnie.",
+        role: "participant",
+        participant_id: participant.participant_id,
+        nickname: participant.nickname
+      });
+    }
+
+    const teacher = teacherMatches[0];
+    const storedPin = this.normalizePin(teacher.pin);
+
     if (!storedPin) {
       return this.error(
-        "To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.",
+        "To konto nauczyciela nie ma ustawionego PIN-u. Skontaktuj sie z administratorem.",
         "PIN_NOT_SET"
       );
+    }
+
+    if (!this.isTeacherActive(teacher)) {
+      return this.error("Konto nauczyciela jest nieaktywne.", "TEACHER_INACTIVE");
     }
 
     if (storedPin !== pin) {
@@ -209,8 +250,10 @@ const API = {
 
     return this.success({
       message: "Zalogowano pomyslnie.",
-      participant_id: participant.participant_id,
-      nickname: participant.nickname
+      role: "teacher",
+      teacher_id: teacher.teacher_id,
+      nickname: teacher.nickname,
+      display_name: teacher.first_name_last_name || teacher.nickname
     });
   },
 
