@@ -101,11 +101,31 @@
     </section>
 
     <section id="view-teacher" class="view hidden center-content">
-      <div class="glass-card complete-card">
+      <div class="glass-card complete-card teacher-panel-card">
         <h1 class="title">Panel Nauczyciela</h1>
         <p class="subtitle">Zalogowano jako <strong id="teacher-nickname">Nauczyciel</strong>.</p>
-        <p class="mt-4 text-small">To konto nauczyciela jest aktywne i gotowe do pracy.</p>
-        <button id="btn-logout-teacher" class="btn-primary mt-4" type="button">Wyloguj</button>
+
+        <div class="teacher-station-box">
+          <p><strong>Moje stanowisko:</strong> <span id="teacher-station-name">-</span></p>
+          <p class="text-small">Kod stanowiska: <span id="teacher-station-code">-</span></p>
+        </div>
+
+        <div class="teacher-actions">
+          <button id="btn-generate-teacher-qr" class="btn-primary" type="button">Wygeneruj nowy QR</button>
+        </div>
+
+        <div class="teacher-qr-preview">
+          <canvas id="teacher-qr-canvas" width="240" height="240" aria-label="Podglad kodu QR"></canvas>
+          <p class="text-small">Link skanowania:</p>
+          <a id="teacher-qr-link" class="teacher-qr-link" href="#" target="_blank" rel="noopener noreferrer">-</a>
+        </div>
+
+        <div class="teacher-history">
+          <h3 class="section-title">Ostatnie aktywne kody</h3>
+          <ul id="teacher-qr-history" class="teacher-qr-history-list"></ul>
+        </div>
+
+        <button id="btn-logout-teacher" class="btn-secondary mt-4" type="button">Wyloguj</button>
       </div>
     </section>
 

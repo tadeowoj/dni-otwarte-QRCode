@@ -1,41 +1,40 @@
-/**
+﻿/**
  * API.js - Logika biznesowa i kontrolery (wg modulow projektu)
  */
 
 const ALLOWED_SCHOOL_NAMES = [
-  "Szkoła Podstawowa im. Szarych Szeregów w Czyżewie",
-  "Szkoła Podstawowa im. Ojca Świętego Jana Pawła II w Bogutach-Piankach",
-  "Szkoła Podstawowa w Tymiankach-Buciach",
-  "Szkoła Podstawowa im. Marii Konopnickiej w Nurze",
-  "Szkoła Podstawowa im. Kardynała Stefana Wyszyńskiego w Szulborzu Wielkim",
-  "Szkoła Podstawowa w Zarębach Kościelnych",
-  "Szkoła Podstawowa w Andrzejewie",
-  "Szkoła Podstawowa w Ołdakach-Polonii",
-  "Szkoła Podstawowa im. Św. Jana Pawła II w Rosochatym-Kościelnym",
-  "Szkoła Podstawowa w Dąbrowie Wielkiej",
-  "Szkoła Podstawowa im. Kardynała Stefana Wyszyńskiego w Szepietowie",
-  "Szkoła Podstawowa w Wojnach-Krupach",
-  "Szkoła Podstawowa im. Polskiej Organizacji Wojskowej w Dąbrówce Kościelnej",
-  "Szkoła Podstawowa im. Komisji Edukacji Narodowej w Klukowie",
-  "Szkoła Podstawowa w Wyszonkach Kościelnych",
-  "Szkoła Podstawowa w Łuniewie Małym"
+  "SzkoĹ‚a Podstawowa im. Szarych SzeregĂłw w CzyĹĽewie",
+  "SzkoĹ‚a Podstawowa im. Ojca ĹšwiÄ™tego Jana PawĹ‚a II w Bogutach-Piankach",
+  "SzkoĹ‚a Podstawowa w Tymiankach-Buciach",
+  "SzkoĹ‚a Podstawowa im. Marii Konopnickiej w Nurze",
+  "SzkoĹ‚a Podstawowa im. KardynaĹ‚a Stefana WyszyĹ„skiego w Szulborzu Wielkim",
+  "SzkoĹ‚a Podstawowa w ZarÄ™bach KoĹ›cielnych",
+  "SzkoĹ‚a Podstawowa w Andrzejewie",
+  "SzkoĹ‚a Podstawowa w OĹ‚dakach-Polonii",
+  "SzkoĹ‚a Podstawowa im. Ĺšw. Jana PawĹ‚a II w Rosochatym-KoĹ›cielnym",
+  "SzkoĹ‚a Podstawowa w DÄ…browie Wielkiej",
+  "SzkoĹ‚a Podstawowa im. KardynaĹ‚a Stefana WyszyĹ„skiego w Szepietowie",
+  "SzkoĹ‚a Podstawowa w Wojnach-Krupach",
+  "SzkoĹ‚a Podstawowa im. Polskiej Organizacji Wojskowej w DÄ…brĂłwce KoĹ›cielnej",
+  "SzkoĹ‚a Podstawowa im. Komisji Edukacji Narodowej w Klukowie",
+  "SzkoĹ‚a Podstawowa w Wyszonkach KoĹ›cielnych",
+  "SzkoĹ‚a Podstawowa w Ĺuniewie MaĹ‚ym"
 ];
 
+const DEFAULT_APP_BASE_URL = "https://qr.zsoiz-czyzew.pl/";
+const QR_TOKEN_LENGTH = 24;
+
 const API = {
-  // Zwraca odpowiedz w spojnym formacie
   success(data) {
     return { status: "success", data: data };
   },
 
   error(message, error_code = null) {
     const response = { status: "error", message: message };
-    if (error_code) {
-      response.error_code = error_code;
-    }
+    if (error_code) response.error_code = error_code;
     return response;
   },
 
-  // Ujednolicenie PIN-u z inputa i z arkusza (string/number/whitespace).
   normalizePin(pin) {
     return String(pin ?? "").trim();
   },
@@ -45,6 +44,10 @@ const API = {
   },
 
   normalizeNickname(value) {
+    return String(value ?? "").trim();
+  },
+
+  normalizeStationCode(value) {
     return String(value ?? "").trim();
   },
 
@@ -58,15 +61,12 @@ const API = {
 
   getAllowedSchoolByComparableName(value) {
     const comparableValue = this.normalizeComparableNameOrSchool(value);
-    return ALLOWED_SCHOOL_NAMES.find((school) => {
-      return this.normalizeComparableNameOrSchool(school) === comparableValue;
-    }) || null;
+    return ALLOWED_SCHOOL_NAMES.find((school) => this.normalizeComparableNameOrSchool(school) === comparableValue) || null;
   },
 
   isAdminPinValid(pin) {
     const enteredPin = this.normalizePin(pin);
     const configuredPin = this.normalizePin(DB.getSetting("admin_pin"));
-
     if (!enteredPin || !configuredPin) return false;
     return enteredPin === configuredPin;
   },
@@ -79,7 +79,28 @@ const API = {
     return teacher && (teacher.is_active === true || teacher.is_active === "TRUE" || teacher.is_active === "true" || teacher.is_active === 1 || teacher.is_active === "1");
   },
 
-  // M1: Rejestracja Uczestnika
+  buildScanUrl(qrToken) {
+    const baseUrl = String(DB.getSetting("app_base_url") || DEFAULT_APP_BASE_URL).trim();
+    const safeBase = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+    return `${safeBase}?qr_token=${encodeURIComponent(qrToken)}`;
+  },
+
+  generateRandomToken(length = QR_TOKEN_LENGTH) {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    let token = "";
+    for (let i = 0; i < length; i++) {
+      token += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return token;
+  },
+
+  getStationByCode(stationCode) {
+    const code = this.normalizeStationCode(stationCode);
+    if (!code) return null;
+    const stations = DB.getRowsAsObjects("Stanowiska");
+    return stations.find((station) => this.normalizeStationCode(station.station_code) === code) || null;
+  },
+
   registerParticipant(payload) {
     const safePayload = payload || {};
     const first_name_last_name = this.normalizeNameOrSchool(safePayload.first_name_last_name);
@@ -99,7 +120,6 @@ const API = {
     const normalizedNickname = this.normalizeComparableNickname(nickname);
     const normalizedSchool = this.normalizeComparableNameOrSchool(canonicalSchoolName);
 
-    // Blokada rownoleglych zapisow: check + insert musza byc atomowe.
     const lock = LockService.getScriptLock();
     try {
       lock.waitLock(10000);
@@ -114,18 +134,15 @@ const API = {
       });
 
       if (exists) {
-        return this.error(
-          "Takie konto juz istnieje (imie i nazwisko + nick + szkola).",
-          "DUPLICATE_PARTICIPANT"
-        );
+        return this.error("Takie konto juz istnieje (imie i nazwisko + nick + szkola).", "DUPLICATE_PARTICIPANT");
       }
 
       const participant_id = "U_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
 
       DB.insertRow("Uczestnicy", {
-        participant_id: participant_id,
-        first_name_last_name: first_name_last_name,
-        nickname: nickname,
+        participant_id,
+        first_name_last_name,
+        nickname,
         pin: "",
         school_name: canonicalSchoolName,
         created_at: new Date().toISOString(),
@@ -136,17 +153,11 @@ const API = {
         status: "active"
       });
 
-      return this.success({
-        message: "Zarejestrowano pomyslnie",
-        participant_id: participant_id,
-        nickname: nickname
-      });
+      return this.success({ message: "Zarejestrowano pomyslnie", participant_id, nickname });
     } catch (error) {
       return this.error("Rejestracja chwilowo niedostepna. Sprobuj ponownie.");
     } finally {
-      if (lock.hasLock()) {
-        lock.releaseLock();
-      }
+      if (lock.hasLock()) lock.releaseLock();
     }
   },
 
@@ -155,22 +166,14 @@ const API = {
     const participant_id = String(safePayload.participant_id ?? "").trim();
     const pin = this.normalizePin(safePayload.pin);
 
-    if (!participant_id) {
-      return this.error("Brak ID uczestnika.");
-    }
-
-    if (!this.isParticipantPinValid(pin)) {
-      return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
-    }
+    if (!participant_id) return this.error("Brak ID uczestnika.");
+    if (!this.isParticipantPinValid(pin)) return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const participant = participants.find((p) => String(p.participant_id) === participant_id);
+    if (!participant) return this.error("Nie znaleziono uczestnika.");
 
-    if (!participant) {
-      return this.error("Nie znaleziono uczestnika.");
-    }
-
-    DB.updateRow("Uczestnicy", participant._rowIndex, { pin: pin });
+    DB.updateRow("Uczestnicy", participant._rowIndex, { pin });
 
     return this.success({
       message: "PIN ustawiony poprawnie.",
@@ -184,17 +187,13 @@ const API = {
     const nickname = this.normalizeNickname(safePayload.nickname);
     const pin = this.normalizePin(safePayload.pin);
 
-    if (!nickname || !pin) {
-      return this.error("Podaj nick i PIN.", "INVALID_CREDENTIALS");
-    }
-
-    if (!this.isParticipantPinValid(pin)) {
-      return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
-    }
+    if (!nickname || !pin) return this.error("Podaj nick i PIN.", "INVALID_CREDENTIALS");
+    if (!this.isParticipantPinValid(pin)) return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
 
     const comparableNickname = this.normalizeComparableNickname(nickname);
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const teachers = DB.getRowsAsObjects("Nauczyciele");
+    const stations = DB.getRowsAsObjects("Stanowiska");
 
     const participantMatches = participants.filter((p) => this.normalizeComparableNickname(p.nickname) === comparableNickname);
     const teacherMatches = teachers.filter((t) => this.normalizeComparableNickname(t.nickname) === comparableNickname);
@@ -212,10 +211,7 @@ const API = {
       const storedPin = this.normalizePin(participant.pin);
 
       if (!storedPin) {
-        return this.error(
-          "To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.",
-          "PIN_NOT_SET"
-        );
+        return this.error("To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.", "PIN_NOT_SET");
       }
 
       if (storedPin !== pin) {
@@ -234,10 +230,7 @@ const API = {
     const storedPin = this.normalizePin(teacher.pin);
 
     if (!storedPin) {
-      return this.error(
-        "To konto nauczyciela nie ma ustawionego PIN-u. Skontaktuj sie z administratorem.",
-        "PIN_NOT_SET"
-      );
+      return this.error("To konto nauczyciela nie ma ustawionego PIN-u. Skontaktuj sie z administratorem.", "PIN_NOT_SET");
     }
 
     if (!this.isTeacherActive(teacher)) {
@@ -248,16 +241,141 @@ const API = {
       return this.error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
     }
 
+    const stationCode = this.normalizeStationCode(teacher.station_code);
+    if (!stationCode) {
+      return this.error("To konto nauczyciela nie ma przypisanego stanowiska.", "TEACHER_STATION_NOT_ASSIGNED");
+    }
+    const teachersWithSameStation = teachers.filter((item) => this.normalizeStationCode(item.station_code) === stationCode);
+    if (teachersWithSameStation.length > 1) {
+      return this.error("To stanowisko jest przypisane do wielu nauczycieli.", "TEACHER_STATION_CONFLICT");
+    }
+
+    const station = stations.find((item) => this.normalizeStationCode(item.station_code) === stationCode);
+    if (!station) {
+      return this.error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
+    }
+
     return this.success({
       message: "Zalogowano pomyslnie.",
       role: "teacher",
       teacher_id: teacher.teacher_id,
       nickname: teacher.nickname,
-      display_name: teacher.first_name_last_name || teacher.nickname
+      display_name: teacher.first_name_last_name || teacher.nickname,
+      station_code: station.station_code,
+      station_name: station.station_name
     });
   },
 
-  // Pobieranie profilu Uczestnika (i wymagan do kompletu)
+  getTeacherPanelData(payload) {
+    const safePayload = payload || {};
+    const teacher_id = String(safePayload.teacher_id ?? "").trim();
+
+    if (!teacher_id) return this.error("Brak ID nauczyciela.");
+
+    const teachers = DB.getRowsAsObjects("Nauczyciele");
+    const teacher = teachers.find((item) => String(item.teacher_id) === teacher_id);
+
+    if (!teacher) return this.error("Nie znaleziono konta nauczyciela.");
+    if (!this.isTeacherActive(teacher)) return this.error("Konto nauczyciela jest nieaktywne.", "TEACHER_INACTIVE");
+
+    const stationCode = this.normalizeStationCode(teacher.station_code);
+    if (!stationCode) return this.error("Brak przypisanego stanowiska do konta nauczyciela.", "TEACHER_STATION_NOT_ASSIGNED");
+    const teachersWithSameStation = teachers.filter((item) => this.normalizeStationCode(item.station_code) === stationCode);
+    if (teachersWithSameStation.length > 1) return this.error("To stanowisko jest przypisane do wielu nauczycieli.", "TEACHER_STATION_CONFLICT");
+
+    const station = this.getStationByCode(stationCode);
+    if (!station) return this.error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
+
+    const qrCodes = DB.getRowsAsObjects("KodyQR")
+      .filter((row) => String(row.teacher_id) === teacher_id && (row.is_active === true || row.is_active === "TRUE"))
+      .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+      .slice(0, 10)
+      .map((row) => ({
+        qr_id: row.qr_id,
+        qr_token: row.qr_token,
+        station_code: row.station_code,
+        created_at: row.created_at,
+        is_active: row.is_active,
+        scan_url: this.buildScanUrl(row.qr_token)
+      }));
+
+    return this.success({
+      teacher: {
+        teacher_id: teacher.teacher_id,
+        nickname: teacher.nickname,
+        display_name: teacher.first_name_last_name || teacher.nickname,
+        station_code: station.station_code,
+        station_name: station.station_name
+      },
+      qr_codes: qrCodes
+    });
+  },
+
+  generateTeacherQr(payload) {
+    const safePayload = payload || {};
+    const teacher_id = String(safePayload.teacher_id ?? "").trim();
+
+    if (!teacher_id) return this.error("Brak ID nauczyciela.");
+
+    const teachers = DB.getRowsAsObjects("Nauczyciele");
+    const teacher = teachers.find((item) => String(item.teacher_id) === teacher_id);
+
+    if (!teacher) return this.error("Nie znaleziono konta nauczyciela.");
+    if (!this.isTeacherActive(teacher)) return this.error("Konto nauczyciela jest nieaktywne.", "TEACHER_INACTIVE");
+
+    const stationCode = this.normalizeStationCode(teacher.station_code);
+    if (!stationCode) return this.error("Brak przypisanego stanowiska do konta nauczyciela.", "TEACHER_STATION_NOT_ASSIGNED");
+    const teachersWithSameStation = teachers.filter((item) => this.normalizeStationCode(item.station_code) === stationCode);
+    if (teachersWithSameStation.length > 1) return this.error("To stanowisko jest przypisane do wielu nauczycieli.", "TEACHER_STATION_CONFLICT");
+
+    const station = this.getStationByCode(stationCode);
+    if (!station) return this.error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
+
+    const lock = LockService.getScriptLock();
+
+    try {
+      lock.waitLock(10000);
+
+      let qrToken = "";
+      let attempts = 0;
+      const existingCodes = DB.getRowsAsObjects("KodyQR");
+
+      do {
+        qrToken = this.generateRandomToken();
+        attempts += 1;
+      } while (existingCodes.some((item) => String(item.qr_token) === qrToken) && attempts < 20);
+
+      if (!qrToken || existingCodes.some((item) => String(item.qr_token) === qrToken)) {
+        return this.error("Nie udalo sie wygenerowac unikalnego tokenu QR. Sprobuj ponownie.");
+      }
+
+      const qrId = "QR_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
+      const createdAt = new Date().toISOString();
+
+      DB.insertRow("KodyQR", {
+        qr_id: qrId,
+        qr_token: qrToken,
+        station_code: station.station_code,
+        teacher_id: teacher.teacher_id,
+        created_at: createdAt,
+        is_active: true
+      });
+
+      return this.success({
+        qr_id: qrId,
+        qr_token: qrToken,
+        station_code: station.station_code,
+        station_name: station.station_name,
+        created_at: createdAt,
+        scan_url: this.buildScanUrl(qrToken)
+      });
+    } catch (error) {
+      return this.error("Generowanie kodu QR chwilowo niedostepne. Sprobuj ponownie.");
+    } finally {
+      if (lock.hasLock()) lock.releaseLock();
+    }
+  },
+
   getParticipantProfile(participant_id) {
     if (!participant_id) return this.error("Brak ID uczestnika");
 
@@ -266,39 +384,44 @@ const API = {
 
     if (!participant) return this.error("Nie znaleziono uczestnika");
 
-    const required_count = parseInt(DB.getSetting("required_codes_count")) || 15;
+    const required_count = parseInt(DB.getSetting("required_codes_count"), 10) || 15;
 
-    return this.success({
-      participant: participant,
-      required_codes_count: required_count
-    });
+    return this.success({ participant, required_codes_count: required_count });
   },
 
-  // M2: Stanowiska / Skanowanie
   getStations() {
     const stations = DB.getRowsAsObjects("Stanowiska");
-    return this.success({ stations: stations });
+    return this.success({ stations });
   },
 
-  // Logika glownego skanowania kodu QR
   scanCode(payload) {
-    const participant_id = payload.participant_id;
-    const station_code = payload.station_code;
+    const safePayload = payload || {};
+    const participant_id = String(safePayload.participant_id ?? "").trim();
+    const qr_token = String(safePayload.qr_token ?? "").trim();
 
-    if (!participant_id || !station_code) return this.error("Brakujace dane do skanowania.");
+    if (!participant_id || !qr_token) return this.error("Brakujace dane do skanowania.");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const participant = participants.find((p) => p.participant_id === participant_id);
     if (!participant) return this.error("Uczestnik nie istnieje, zaloguj sie ponownie.");
-    if (participant.is_complete === true) return this.error("Masz juz zdobyty komplet! Trwa weryfikacja do nagrody.");
+    if (participant.is_complete === true || participant.is_complete === "TRUE") {
+      return this.error("Masz juz zdobyty komplet! Trwa weryfikacja do nagrody.");
+    }
+
+    const qrCodes = DB.getRowsAsObjects("KodyQR");
+    const qrCodeRecord = qrCodes.find((row) => String(row.qr_token) === qr_token && (row.is_active === true || row.is_active === "TRUE"));
+    if (!qrCodeRecord) return this.error("Kod QR jest nieprawidlowy lub nieaktywny.", "INVALID_QR_TOKEN");
+
+    const station_code = this.normalizeStationCode(qrCodeRecord.station_code);
+    if (!station_code) return this.error("Kod QR nie ma przypisanego stanowiska.", "QR_STATION_NOT_FOUND");
 
     const stations = DB.getRowsAsObjects("Stanowiska");
-    const station = stations.find((s) => s.station_code === station_code);
+    const station = stations.find((s) => this.normalizeStationCode(s.station_code) === station_code);
     if (!station) return this.error("Kod nieprawidlowy, to stanowisko nie istnieje.");
     if (station.is_active !== true && station.is_active !== "TRUE") return this.error("Stanowisko jest obecnie wylaczone.");
 
     const scans = DB.getRowsAsObjects("Skanowania");
-    const alreadyScanned = scans.find((s) => s.participant_id === participant_id && s.station_code === station_code);
+    const alreadyScanned = scans.find((s) => s.participant_id === participant_id && this.normalizeStationCode(s.station_code) === station_code);
 
     let scanResultStatus = "ok";
     let message = "Zaliczono stanowisko: " + station.station_name;
@@ -310,29 +433,29 @@ const API = {
       DB.insertRow("Skanowania", {
         scan_id: "S_" + new Date().getTime(),
         timestamp: new Date().toISOString(),
-        participant_id: participant_id,
+        participant_id,
         nickname: participant.nickname,
-        station_code: station_code,
+        station_code,
         station_name: station.station_name,
         scan_result: scanResultStatus
       });
-      return this.success({ message: message });
+      return this.success({ message, station_code });
     }
 
     DB.insertRow("Skanowania", {
       scan_id: "S_" + new Date().getTime(),
       timestamp: new Date().toISOString(),
-      participant_id: participant_id,
+      participant_id,
       nickname: participant.nickname,
-      station_code: station_code,
+      station_code,
       station_name: station.station_name,
       scan_result: "ok"
     });
 
-    let newCount = parseInt(participant.codes_collected_count) || 0;
+    let newCount = parseInt(participant.codes_collected_count, 10) || 0;
     newCount += 1;
 
-    const required_count = parseInt(DB.getSetting("required_codes_count")) || 15;
+    const required_count = parseInt(DB.getSetting("required_codes_count"), 10) || 15;
     const isComplete = newCount >= required_count;
 
     DB.updateRow("Uczestnicy", participant._rowIndex, {
@@ -347,15 +470,15 @@ const API = {
     }
 
     return this.success({
-      message: message,
+      message,
       extra_message: extraMessage,
       is_complete: isComplete,
       codes_collected_count: newCount,
-      required_codes_count: required_count
+      required_codes_count: required_count,
+      station_code
     });
   },
 
-  // Statystyki do dashboardu / admina
   getStats() {
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const stations = DB.getRowsAsObjects("Stanowiska");
@@ -372,7 +495,6 @@ const API = {
     });
   },
 
-  // M6: Panel administratora - pobieranie pelnych tabel i statystyk
   getAdminData(pin) {
     if (!this.isAdminPinValid(pin)) return this.error("Nieprawidlowy kod PIN administratora.");
 
@@ -383,8 +505,8 @@ const API = {
     participants.reverse();
 
     return this.success({
-      participants: participants,
-      stations: stations,
+      participants,
+      stations,
       stats: {
         total_participants: participants.length,
         completed_participants: participants.filter((p) => p.is_complete === true || p.is_complete === "TRUE").length,
@@ -394,10 +516,10 @@ const API = {
     });
   },
 
-  // Oznaczenie, ze nagroda za komplet zostala fizycznie wydana
   issueReward(payload) {
-    const pin = payload.pin;
-    const participant_id = payload.participant_id;
+    const safePayload = payload || {};
+    const pin = safePayload.pin;
+    const participant_id = safePayload.participant_id;
 
     if (!this.isAdminPinValid(pin)) return this.error("Odmowa dostepu");
     if (!participant_id) return this.error("Brakujace ID do nagrody");

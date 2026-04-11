@@ -20,7 +20,7 @@ Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgady
 
 # Kontekst projektu
 Calosc wymagan funkcjonalnych jest opisana w `PROJEKT.md`.
-Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend Google Apps Script + Google Sheets (`Stanowiska`, `Uczestnicy`, `Skanowania`, `Ustawienia`).
+Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend Google Apps Script + Google Sheets (`Uczestnicy`, `Nauczyciele`, `Stanowiska`, `KodyQR`, `Skanowania`, `Ustawienia`).
 Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Database.js` (warstwa arkusza).
 
 # Stan na 2026-04-11
@@ -41,6 +41,11 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Asset filmu logo jest dostepny przez Vite z `frontend/public/img/logo.webm` (kopiowany z repo `img/logo.webm`).
 - W hero rejestracji logo video zostalo zmniejszone i ustawione po prawej stronie naglowka "Witaj w grze!", z wysokoscia dopasowana do wysokosci naglowka.
 - Logo video w hero rejestracji jest przypiete absolutnie do prawego gornego rogu `.start-card`, powiekszone o okolo 25% i nie wplywa na pozycjonowanie formularza.
+- Model danych nauczyciela zostal uscisleny do relacji `1 nauczyciel = 1 stanowisko` przez pole `station_code` w arkuszu `Nauczyciele`.
+- Dodano arkusz `KodyQR` do przechowywania aktywnych tokenow QR (`qr_id`, `qr_token`, `station_code`, `teacher_id`, `created_at`, `is_active`).
+- Backend ma nowe akcje `get_teacher_panel_data` i `generate_teacher_qr`; logowanie nauczyciela zwraca `station_code` i `station_name`.
+- Endpoint `scan_code` przyjmuje teraz `qr_token` (stare `station_code` i parametr URL `code` nie sa obslugiwane).
+- Widok nauczyciela w `frontend/index.html` umozliwia generowanie nowego QR, podglad aktualnego kodu i historie ostatnich aktywnych tokenow.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -55,6 +60,11 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Dodano publiczny asset `frontend/public/img/logo.webm` oraz potwierdzono lokalny build frontendu (`npm run build`) po zmianie.
 - Przestawiono layout hero: naglowek i logo sa w jednym rzedzie, a rozmiar video zostal doskalowany do wysokosci naglowka (desktop + mobile).
 - Ustawiono logo jako element absolutny w prawym gornym rogu karty i zwiekszono jego skale (`clamp(50px, 6.25vw, 68px)`), zachowujac stabilny uklad pozostalych elementow.
+- Zaimplementowano relacje nauczyciel- stanowisko (`station_code`) i nowy flow generowania kodow QR nauczyciela zapisujacy tokeny w arkuszu `KodyQR`.
+- Rozszerzono panel nauczyciela (`index.html` + `main.js`) o sekcje stanowiska, generowanie nowego QR, render kodu i historie aktywnych tokenow.
+- Przebudowano skanowanie uczestnika na `qr_token` (`?qr_token=...`) i zablokowano stary parametr `?code=...`.
+- Zaktualizowano dokumentacje `schema/database.md` i `PROJEKT.md` pod nowy model danych oraz flow QR.
+- Wykonano `clasp push` po zmianach backendu (API.js, Code.js, Database.js, appsscript.json) do powiazanego projektu Apps Script.
 
 # Operacyjne zasady wdrozeniowe
 - Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
@@ -63,10 +73,14 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 
 # Otwarte TODO
 - W arkuszu `Uczestnicy` dodac fizycznie kolumne `pin` w naglowkach (zgodnie z `schema/database.md`).
+- W arkuszu `Nauczyciele` dodac fizycznie kolumne `station_code` i uzupelnic mapowanie `1 nauczyciel = 1 stanowisko`.
+- Utworzyc arkusz `KodyQR` z naglowkami zgodnymi z `schema/database.md`.
 - Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
+- Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR, widoczna historia kodow.
+- Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
-- Po zmianach backendu wykonac `clasp push` i sprawdzic publiczny deployment Apps Script.
+- Sprawdzic publiczny deployment Apps Script po `clasp push` i opublikowac nowa wersje Web App (`@N`) pod produkcyjny URL.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z nowego deploymentu Apps Script `@9`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENT.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.

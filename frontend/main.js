@@ -1,16 +1,25 @@
+﻿import QRCode from "qrcode";
+
 // =========================================================================
 // KONFIGURACJA & ZMIENNE GLOBALNE
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 
+const queryParams = new URLSearchParams(window.location.search);
+
 const STATE = {
   userId: localStorage.getItem("qr_user_id") || localStorage.getItem("qr_participant_id") || null,
   userRole: localStorage.getItem("qr_user_role") || (localStorage.getItem("qr_participant_id") ? "participant" : null),
   nickname: localStorage.getItem("qr_nickname") || null,
+  teacherDisplayName: localStorage.getItem("qr_teacher_display_name") || null,
+  teacherStationCode: localStorage.getItem("qr_teacher_station_code") || null,
+  teacherStationName: localStorage.getItem("qr_teacher_station_name") || null,
   stations: [],
-  pendingScanCode: new URLSearchParams(window.location.search).get("code"),
-  pendingRegistration: null
+  pendingScanToken: queryParams.get("qr_token"),
+  pendingLegacyCode: queryParams.get("code"),
+  pendingRegistration: null,
+  teacherCodes: []
 };
 
 // =========================================================================
@@ -35,9 +44,7 @@ function hideAllViews() {
 
 function showView(viewName) {
   hideAllViews();
-  if (views[viewName]) {
-    views[viewName].classList.add("active");
-  }
+  if (views[viewName]) views[viewName].classList.add("active");
 }
 
 function showToast(message, isError = false) {
@@ -84,42 +91,62 @@ async function fetchAPI(action, payload) {
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: action, payload: payload })
+      body: JSON.stringify({ action, payload })
     });
-    const result = await response.json();
-    return result;
+    return await response.json();
   } catch (err) {
     console.error("Blad sieci:", err);
     return { status: "error", message: "Brak stabilnego polaczenia z serwerem." };
   }
 }
 
-function startUserSession(role, userId, nickname) {
+function startUserSession(role, userId, nickname, extra = {}) {
   STATE.userRole = role;
   STATE.userId = userId;
   STATE.nickname = nickname;
+  STATE.teacherDisplayName = extra.displayName || null;
+  STATE.teacherStationCode = extra.stationCode || null;
+  STATE.teacherStationName = extra.stationName || null;
+
   localStorage.setItem("qr_user_role", role);
   localStorage.setItem("qr_user_id", userId);
+  localStorage.setItem("qr_nickname", nickname);
+
   if (role === "participant") {
     localStorage.setItem("qr_participant_id", userId);
+    localStorage.removeItem("qr_teacher_display_name");
+    localStorage.removeItem("qr_teacher_station_code");
+    localStorage.removeItem("qr_teacher_station_name");
   } else {
     localStorage.removeItem("qr_participant_id");
+    localStorage.setItem("qr_teacher_display_name", STATE.teacherDisplayName || "");
+    localStorage.setItem("qr_teacher_station_code", STATE.teacherStationCode || "");
+    localStorage.setItem("qr_teacher_station_name", STATE.teacherStationName || "");
   }
-  localStorage.setItem("qr_nickname", nickname);
+}
+
+function clearSessionStorage() {
+  localStorage.removeItem("qr_user_role");
+  localStorage.removeItem("qr_user_id");
+  localStorage.removeItem("qr_participant_id");
+  localStorage.removeItem("qr_nickname");
+  localStorage.removeItem("qr_teacher_display_name");
+  localStorage.removeItem("qr_teacher_station_code");
+  localStorage.removeItem("qr_teacher_station_name");
 }
 
 function logoutUser() {
   const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
-  localStorage.removeItem("qr_user_role");
-  localStorage.removeItem("qr_user_id");
-  localStorage.removeItem("qr_participant_id");
-  localStorage.removeItem("qr_nickname");
+  clearSessionStorage();
   STATE.userId = null;
   STATE.userRole = null;
   STATE.nickname = null;
-  STATE.pendingScanCode = null;
+  STATE.teacherDisplayName = null;
+  STATE.teacherStationCode = null;
+  STATE.teacherStationName = null;
+  STATE.pendingScanToken = null;
 
   showRegisterForm();
   showView("register");
@@ -130,9 +157,14 @@ function logoutUser() {
 // INICJALIZACJA I LOGIKA GLOWNA
 // =========================================================================
 async function initApp() {
+  if (STATE.pendingLegacyCode) {
+    showToast("Stare kody ?code=... sa nieobslugiwane. Uzyj nowego QR z tokenem.", true);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   if (!STATE.userId) {
     showRegisterForm();
-    if (STATE.pendingScanCode) {
+    if (STATE.pendingScanToken) {
       showToast("Aby zeskanowac kod, musisz sie najpierw zalogowac lub zarejestrowac.", true);
     }
     showView("register");
@@ -140,14 +172,14 @@ async function initApp() {
   }
 
   if (STATE.userRole === "teacher") {
-    renderTeacherScreen();
+    await loadTeacherPanel();
     return;
   }
 
-  if (STATE.pendingScanCode) {
-    await handleScanCode(STATE.pendingScanCode);
+  if (STATE.pendingScanToken) {
+    await handleScanCode(STATE.pendingScanToken);
     window.history.replaceState({}, document.title, window.location.pathname);
-    STATE.pendingScanCode = null;
+    STATE.pendingScanToken = null;
   } else {
     await loadDashboard();
   }
@@ -251,7 +283,13 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 
   const role = res.data.role || "participant";
   const userId = role === "teacher" ? res.data.teacher_id : res.data.participant_id;
-  startUserSession(role, userId, res.data.nickname);
+
+  startUserSession(role, userId, res.data.nickname, {
+    displayName: res.data.display_name,
+    stationCode: res.data.station_code,
+    stationName: res.data.station_name
+  });
+
   showToast("Zalogowano pomyslnie!");
   await initApp();
 });
@@ -287,7 +325,7 @@ document.getElementById("pin-setup-form").addEventListener("submit", async (e) =
 
   const res = await fetchAPI("set_user_pin", {
     participant_id: STATE.pendingRegistration.participantId,
-    pin: pin
+    pin
   });
 
   btn.innerText = "Zapisz PIN i przejdz dalej";
@@ -306,7 +344,112 @@ document.getElementById("pin-setup-form").addEventListener("submit", async (e) =
 });
 
 // =========================================================================
-// LADOWANIE PANELU (DASHBOARD)
+// PANEL NAUCZYCIELA
+// =========================================================================
+async function renderTeacherQr(url) {
+  const canvas = document.getElementById("teacher-qr-canvas");
+  if (!url) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  await QRCode.toCanvas(canvas, url, {
+    width: 220,
+    margin: 1,
+    color: {
+      dark: "#1f2937",
+      light: "#ffffff"
+    }
+  });
+}
+
+function renderTeacherHistory(codes) {
+  const list = document.getElementById("teacher-qr-history");
+  list.innerHTML = "";
+
+  if (!codes || codes.length === 0) {
+    list.innerHTML = '<li class="teacher-qr-history-item">Brak aktywnych kodow. Wygeneruj pierwszy QR.</li>';
+    return;
+  }
+
+  codes.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "teacher-qr-history-item";
+    li.innerHTML = `
+      <div><strong>Token:</strong> ${item.qr_token}</div>
+      <div><strong>Utworzono:</strong> ${new Date(item.created_at).toLocaleString()}</div>
+      <div><a href="${item.scan_url}" target="_blank" rel="noopener noreferrer">${item.scan_url}</a></div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+async function loadTeacherPanel() {
+  showView("loader");
+
+  const response = await fetchAPI("get_teacher_panel_data", { teacher_id: STATE.userId });
+  if (response.status === "error") {
+    showToast(response.message || "Nie udalo sie pobrac panelu nauczyciela.", true);
+    clearSessionStorage();
+    STATE.userId = null;
+    STATE.userRole = null;
+    showRegisterForm();
+    showView("register");
+    return;
+  }
+
+  const teacher = response.data.teacher;
+  const codes = response.data.qr_codes || [];
+
+  STATE.nickname = teacher.nickname;
+  STATE.teacherDisplayName = teacher.display_name;
+  STATE.teacherStationCode = teacher.station_code;
+  STATE.teacherStationName = teacher.station_name;
+  STATE.teacherCodes = codes;
+
+  document.getElementById("teacher-nickname").innerText = teacher.display_name || teacher.nickname;
+  document.getElementById("teacher-station-name").innerText = teacher.station_name || "-";
+  document.getElementById("teacher-station-code").innerText = teacher.station_code || "-";
+
+  const latest = codes[0] || null;
+  const qrLink = document.getElementById("teacher-qr-link");
+
+  if (latest) {
+    qrLink.href = latest.scan_url;
+    qrLink.innerText = latest.scan_url;
+    await renderTeacherQr(latest.scan_url);
+  } else {
+    qrLink.href = "#";
+    qrLink.innerText = "-";
+    await renderTeacherQr(null);
+  }
+
+  renderTeacherHistory(codes);
+  showView("teacher");
+}
+
+async function generateTeacherQr() {
+  const btn = document.getElementById("btn-generate-teacher-qr");
+  btn.disabled = true;
+  btn.innerText = "Generowanie...";
+
+  const response = await fetchAPI("generate_teacher_qr", { teacher_id: STATE.userId });
+
+  btn.disabled = false;
+  btn.innerText = "Wygeneruj nowy QR";
+
+  if (response.status === "error") {
+    showToast(response.message || "Nie udalo sie wygenerowac kodu QR.", true);
+    return;
+  }
+
+  showToast("Nowy kod QR wygenerowany.");
+  await loadTeacherPanel();
+}
+
+// =========================================================================
+// LADOWANIE PANELU UCZESTNIKA
 // =========================================================================
 async function loadDashboard() {
   showView("loader");
@@ -317,10 +460,7 @@ async function loadDashboard() {
   ]);
 
   if (profileRes.status === "error") {
-    localStorage.removeItem("qr_participant_id");
-    localStorage.removeItem("qr_nickname");
-    localStorage.removeItem("qr_user_id");
-    localStorage.removeItem("qr_user_role");
+    clearSessionStorage();
     STATE.userId = null;
     STATE.userRole = null;
     showToast(profileRes.message, true);
@@ -345,7 +485,7 @@ function renderDashboard(participant, reqCount) {
   document.getElementById("dash-school").innerText = participant.school_name;
   document.getElementById("avatar-letter").innerText = participant.nickname.charAt(0).toUpperCase();
 
-  const collected = parseInt(participant.codes_collected_count) || 0;
+  const collected = parseInt(participant.codes_collected_count, 10) || 0;
   document.getElementById("dash-collected").innerText = collected;
   document.getElementById("dash-required").innerText = reqCount;
 
@@ -375,12 +515,12 @@ function renderDashboard(participant, reqCount) {
 // =========================================================================
 // OBSLUGA SKANOWANIA
 // =========================================================================
-async function handleScanCode(code) {
+async function handleScanCode(qrToken) {
   showView("loader");
 
   const res = await fetchAPI("scan_code", {
     participant_id: STATE.userId,
-    station_code: code
+    qr_token: qrToken
   });
 
   if (res.status === "error") {
@@ -392,7 +532,7 @@ async function handleScanCode(code) {
   if (res.data.is_complete) {
     await loadDashboard();
   } else {
-    const isDuplicate = res.data.message.includes("juz zaliczone");
+    const isDuplicate = String(res.data.message || "").includes("juz zaliczone");
     document.getElementById("scan-title").innerText = isDuplicate ? "Hej!" : "Swietnie!";
     document.getElementById("scan-message").innerText = res.data.message;
 
@@ -408,6 +548,15 @@ async function handleScanCode(code) {
   }
 }
 
+function renderCompleteScreen(participant) {
+  document.getElementById("comp-nickname").innerText = participant.nickname;
+  document.getElementById("comp-school").innerText = participant.school_name;
+  showView("complete");
+}
+
+// =========================================================================
+// EVENTY
+// =========================================================================
 document.getElementById("btn-back-dash").addEventListener("click", () => {
   loadDashboard();
 });
@@ -420,19 +569,9 @@ document.getElementById("btn-logout-teacher").addEventListener("click", () => {
   logoutUser();
 });
 
-// =========================================================================
-// EKRAN KONCOWY
-// =========================================================================
-function renderCompleteScreen(participant) {
-  document.getElementById("comp-nickname").innerText = participant.nickname;
-  document.getElementById("comp-school").innerText = participant.school_name;
-  showView("complete");
-}
-
-function renderTeacherScreen() {
-  document.getElementById("teacher-nickname").innerText = STATE.nickname || "Nauczyciel";
-  showView("teacher");
-}
+document.getElementById("btn-generate-teacher-qr").addEventListener("click", async () => {
+  await generateTeacherQr();
+});
 
 // =========================================================================
 // START APLIKACJI

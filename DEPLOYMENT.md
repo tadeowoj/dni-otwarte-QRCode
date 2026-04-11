@@ -36,3 +36,13 @@ Przy użyciu narzędzia `clasp` (CLI od Google) możemy przepchnąć kod prosto 
     * Wyślij! Skopiuj **Adres URL wdrożenia** (taki brzydki link zaczynający się od `script.google.com/macros/s/..../exec`). Ten link wprowadzisz później do ustawień środowiskowych lub wskażesz bezpośrednio mojej osobie przy tworzeniu Front-Endu!
 
 Jak tylko zdobędziesz ten docelowy Adres URL, daj mi znać i wygeneruję nam FrontEnd (HTML/CSS) łączący się z Twoją bazą.
+
+---
+
+## Aktualizacja wdrozenia - 2026-04-11 (QR nauczyciela)
+
+- Wymagane arkusze: `Uczestnicy`, `Nauczyciele`, `Stanowiska`, `KodyQR`, `Skanowania`, `Ustawienia`.
+- W arkuszu `Nauczyciele` musi istniec kolumna `station_code` (relacja `1 nauczyciel = 1 stanowisko`).
+- Skanowanie uczestnika dziala po parametrze `qr_token` (link typu `...?qr_token=...`), nie po `code`.
+- W `Ustawienia` dodaj `app_base_url` (np. `https://qr.zsoiz-czyzew.pl/`), bo backend buduje z tego link QR.
+- Po zmianach backendu wykonuj `clasp push`, a potem publikuj nowa wersje Web App (`@N`) i aktualizuj URL API we frontendzie.

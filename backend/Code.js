@@ -53,6 +53,12 @@ function doPost(e) {
       case "login_user":
         result = API.loginUser(payload);
         break;
+      case "get_teacher_panel_data":
+        result = API.getTeacherPanelData(payload);
+        break;
+      case "generate_teacher_qr":
+        result = API.generateTeacherQr(payload);
+        break;
       case "get_profile":
         result = API.getParticipantProfile(payload.participant_id);
         break;

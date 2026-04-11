@@ -432,6 +432,74 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
   .profile-badge { background: rgba(255, 255, 255, 0.7); padding: 1rem; border-radius: 12px; margin-top: 2rem; border: 1px solid var(--clr-glass-border); }
   .text-small { font-size: 0.75rem; color: var(--clr-text-muted); }
 
+  .teacher-panel-card {
+    max-width: 560px;
+    text-align: left;
+  }
+
+  .teacher-panel-card .subtitle {
+    margin-bottom: 1rem;
+  }
+
+  .teacher-station-box {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 1rem;
+  }
+
+  .teacher-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .teacher-qr-preview {
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  #teacher-qr-canvas {
+    width: 220px;
+    height: 220px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+  }
+
+  .teacher-qr-link {
+    color: var(--clr-purple-dark);
+    word-break: break-all;
+    font-size: 0.85rem;
+  }
+
+  .teacher-history {
+    margin-top: 0.5rem;
+  }
+
+  .teacher-qr-history-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .teacher-qr-history-item {
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.65);
+    font-size: 0.85rem;
+  }
+
   /* =========================================================================
      ROZDZIAL 10: EKRAN AUTORYZACJI
      ========================================================================= */

@@ -1,18 +1,9 @@
-﻿# Schemat Bazy Danych (Google Sheets)
+﻿# Schemat bazy danych (Google Sheets)
 
 Aby aplikacja dzialala poprawnie, przygotuj plik Google Sheets wedlug tej konfiguracji.
 
-## 1. Nazwy arkuszy (zakladek)
-Utworz dokladnie 5 arkuszy:
-1. `Uczestnicy`
-2. `Nauczyciele`
-3. `Stanowiska`
-4. `Skanowania`
-5. `Ustawienia`
-
-Wazne: zamien domyslny `Arkusz1` na `Uczestnicy`.
-
----
+## 1. Nazwy arkuszy
+Utworz dokladnie 6 arkuszy: `Uczestnicy`, `Nauczyciele`, `Stanowiska`, `KodyQR`, `Skanowania`, `Ustawienia`.
 
 ## 2. Naglowki (wiersz 1)
 W kazdym arkuszu wpisz naglowki dokladnie tak, jak ponizej.
@@ -23,23 +14,23 @@ W kazdym arkuszu wpisz naglowki dokladnie tak, jak ponizej.
 | `participant_id` | `first_name_last_name` | `nickname` | `pin` | `school_name` | `created_at` | `codes_collected_count` | `is_complete` | `completed_at` | `reward_issued` | `status` |
 
 ### Arkusz: `Nauczyciele`
-| A | B | C | D | E | F | G |
-|---|---|---|---|---|---|---|
-| `teacher_id` | `first_name_last_name` | `nickname` | `pin` | `is_active` | `created_at` | `notes` |
+| A | B | C | D | E | F | G | H |
+|---|---|---|---|---|---|---|---|
+| `teacher_id` | `first_name_last_name` | `nickname` | `pin` | `is_active` | `created_at` | `notes` | `station_code` |
 
-Uwagi:
-- Konta nauczycieli dodaje admin recznie (bez rejestracji z formularza).
-- Logowanie nauczyciela dziala przez ten sam formularz co uczestnik: `nickname` + `pin`.
-- `is_active` ustawiaj na `TRUE` dla kont aktywnych.
-- `teacher_id` moze miec format np. `T_001`, `T_002`.
+Uwagi: konta nauczycieli dodaje admin recznie, logowanie nauczyciela dziala przez `nickname + pin`, `nickname` musi byc unikalny, `station_code` jest wymagany i musi byc unikalny w arkuszu `Nauczyciele`.
 
 ### Arkusz: `Stanowiska`
 | A | B | C | D | E | F |
 |---|---|---|---|---|---|
 | `station_code` | `station_name` | `station_description` | `station_type` | `is_active` | `display_order` |
 
-Dodaj pod spodem przynajmniej jedno testowe stanowisko, np.:
-`TEST_01 | Stanowisko 1 | Opis | quiz | TRUE | 1`
+### Arkusz: `KodyQR`
+| A | B | C | D | E | F |
+|---|---|---|---|---|---|
+| `qr_id` | `qr_token` | `station_code` | `teacher_id` | `created_at` | `is_active` |
+
+Uwagi: `qr_token` musi byc unikalny, nowe kody QR sa dodatkowymi aktywnymi tokenami dla stanowiska.
 
 ### Arkusz: `Skanowania`
 | A | B | C | D | E | F | G |
@@ -51,9 +42,4 @@ Dodaj pod spodem przynajmniej jedno testowe stanowisko, np.:
 |---|---|
 | `key` | `value` |
 
-Wpisy startowe w `Ustawienia`:
-- `A2`: `required_codes_count` | `B2`: `15`
-- `A3`: `event_name` | `B3`: `Dni Otwarte ZSOiZ`
-- `A4`: `event_active` | `B4`: `TRUE`
-- `A5`: `completion_message` | `B5`: `Gratulacje, zdobyles komplet punktow!`
-- `A6`: `admin_pin` | `B6`: `1234` (zmien po starcie)
+Wpisy startowe w `Ustawienia`: `required_codes_count=15`, `event_name=Dni Otwarte ZSOiZ`, `event_active=TRUE`, `completion_message=Gratulacje, zdobyles komplet punktow!`, `admin_pin=1234` (zmien po starcie), `app_base_url=https://qr.zsoiz-czyzew.pl/`.
