@@ -27,6 +27,11 @@ Backend jest podzielony modułowo: `Code.js` (router), `API.js` (logika), `Datab
 - Rejestracja jest zabezpieczona `LockService.getScriptLock()` przed równoległym duplikowaniem rekordów.
 - Dashboard uczestnika ma przycisk `Wyloguj`, który czyści lokalną sesję (`localStorage`) i wraca do rejestracji.
 - Kolorystyka frontendu została rozjaśniona do jasnego motywu szkolnego z fioletem jako głównym akcentem; zielony pozostał pomocniczy dla sukcesu/postępu.
+# Ostatnia sesja (2026-04-11)
+- Zmieniono paletę UI na jaśniejszą i bardziej szkolną bez zmian logiki JS oraz API.
+- Tokeny kolorów zostały zebrane i ujednolicone w `frontend/style.css` (`:root`).
+- Dopasowano też style panelu admina w `frontend/admin.html` do tej samej palety.
+- Zmiany dotknęły tylko warstwę wizualną (`frontend/style.css`, `frontend/admin.html`).
 # Operacyjne zasady wdrożeniowe
 - Gdy zmieniasz endpoint Apps Script, aktualizuj URL równocześnie w `frontend/main.js` i `frontend/admin.js`.
 - Po zmianach backendu wykonuj `clasp push` i pilnuj zgodności aktywnego Web App deploymentu z frontendem.
@@ -34,4 +39,4 @@ Backend jest podzielony modułowo: `Code.js` (router), `API.js` (logika), `Datab
 # Otwarte TODO
 - Po kolejnych zmianach backendu uruchomić ręczną walidację scenariuszy rejestracji (duplikaty, różnice wielkości liter/spacji, równoległe submitowanie).
 - Po zmianach frontendu wykonać `npm run build` i wdrożenie na GitHub Pages.
-- Po każdej istotnej zmianie aktualizować `AGENT.md` i `AGENTS.md`, żeby utrzymać jeden spójny kontekst dla następnych sesji.
+- Po każdej istotnej zmianie aktualizować ten plik (`AGENT.md`) jako jedyne źródło kontekstu dla kolejnych sesji.
