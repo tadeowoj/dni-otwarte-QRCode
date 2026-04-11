@@ -59,6 +59,12 @@ function doPost(e) {
       case "get_stats":
         result = API.getStats();
         break;
+      case "get_admin_data":
+        result = API.getAdminData(payload.pin);
+        break;
+      case "issue_reward":
+        result = API.issueReward(payload);
+        break;
       default:
         result = API.error("Nieznana akcja API: " + action);
     }

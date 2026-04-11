@@ -170,5 +170,48 @@ const API = {
        total_scans: scans.length,
        active_stations: activeStations
     });
+  },
+
+  /** M6: Panel Administratora - Pobieranie pełnych tabel i statystyk */
+  getAdminData(pin) {
+    if (pin !== "14317") return this.error("Nieprawidłowy kod PIN administratora.");
+
+    const participants = DB.getRowsAsObjects("Uczestnicy");
+    const stations = DB.getRowsAsObjects("Stanowiska");
+    const scans = DB.getRowsAsObjects("Skanowania");
+
+    // Odwracamy tabele chronologicznie (najnowsze u góry)
+    participants.reverse();
+
+    return this.success({
+       participants: participants,
+       stations: stations,
+       stats: {
+         total_participants: participants.length,
+         completed_participants: participants.filter(p => p.is_complete === true || p.is_complete === "TRUE").length,
+         total_stations: stations.length,
+         total_scans: scans.length
+       }
+    });
+  },
+
+  /** Oznaczanie, że nagroda za komplet została fizycznie wydana */
+  issueReward(payload) {
+    const { pin, participant_id } = payload;
+    if (pin !== "14317") return this.error("Odmowa dostępu");
+    
+    if (!participant_id) return this.error("Brakujące ID do nagrody");
+
+    const participants = DB.getRowsAsObjects("Uczestnicy");
+    const participant = participants.find(p => p.participant_id === participant_id);
+
+    if (!participant) return this.error("Uczeń nie istnieje.");
+    if (participant.is_complete !== true && participant.is_complete !== "TRUE") {
+       return this.error("Temu graczowi fizycznie brakuje punktów do kompletu!");
+    }
+
+    DB.updateRow("Uczestnicy", participant._rowIndex, { reward_issued: true });
+
+    return this.success({ message: "Oznaczono wydanie nagrody dla gracza: " + participant.nickname });
   }
 };
