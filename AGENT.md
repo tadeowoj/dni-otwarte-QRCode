@@ -50,7 +50,12 @@ Zbudowano aplikację typu SPA (Single Page Application) ze strukturą Vite. Oskr
 - Kolorystyka to motyw Dark Mode + neonowa zieleń do wskazywania postępu, oraz ciemny fiolet do tła i przycisków.
 - Stan klienta (Participant ID) jest zapisywany w `localStorage`, żeby uczeń wbiegając na salę nie musiał się co stół logować.
 
-### TODO (Oczekujące Zadania)
-1. **[Zadanie Użytkownika]** Przetestowanie lokalne aplikacji (przez polecenie `npm run dev` w katalogu `frontend`). Zobaczenie czy z telefonu poprawnie "nabija" QR Code.
-2. Zbudowanie gotowej kompilacji (`npm run build`) do zrzucenia na serwer / Vercel. 
-3. (Opcjonalne) dodanie panelu admina odczytującego statystyki (chyba, że korzystanie bezpośrednio z GSheet w tej materii okaże się wystarczające).
+## Podsumowanie - Etap 3: Panel Admina i Ostateczne Wdrożenie
+Stworzyliśmy wyizolowany podprojekt interfejsu (Admin Panel) wewnątrz Frontendu dla organizatorów, zabezpieczony podstawowym hasłem (PIN: `14317`). Po stronie API (`Code.js`, `API.js`) wbudowano metody zwracające kompleksowe statystyki oraz pełną historię tabel uczestników do weryfikacji manualnej. Dodano na repozytorium GitHub skrypt typu Action (CI/CD) hostujący automatycznie aplikację.
+
+### Osiągnięcia Techniczne:
+- `admin.html` oraz `admin.js` stworzone w zgodzie ze stylem (Glassmorphism & Gridy). Moduł działa całkowicie niezależnie od ścieżki logowania standardowego uczestnika.
+- Skonfigurowano auto-deploy na gałęzi Main. Plik konfiguracyjny (vite + gh-pages + workflow) gotowy.
+
+### TODO (W pełni zakończony proces)
+Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa na przyjęcie uczniów.

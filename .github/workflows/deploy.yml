@@ -37,6 +37,8 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: ./frontend
+      - name: Create CNAME file
+        run: echo "qr.zsoiz-czyzew.pl" > ./frontend/dist/CNAME
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
