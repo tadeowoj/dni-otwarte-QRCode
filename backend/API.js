@@ -12,6 +12,19 @@ const API = {
     return { status: "error", message: message };
   },
 
+  /** Ujednolicenie PIN-u z inputa i z arkusza (string/number/whitespace). */
+  normalizePin(pin) {
+    return String(pin ?? "").trim();
+  },
+
+  isAdminPinValid(pin) {
+    const enteredPin = this.normalizePin(pin);
+    const configuredPin = this.normalizePin(DB.getSetting("admin_pin"));
+
+    if (!enteredPin || !configuredPin) return false;
+    return enteredPin === configuredPin;
+  },
+
   /** M1: Rejestracja Uczestnika */
   registerParticipant(payload) {
     const { first_name_last_name, nickname, school_name } = payload;
@@ -174,8 +187,7 @@ const API = {
 
   /** M6: Panel Administratora - Pobieranie pełnych tabel i statystyk */
   getAdminData(pin) {
-    const correctPin = DB.getSetting("admin_pin");
-    if (pin !== correctPin) return this.error("Nieprawidłowy kod PIN administratora.");
+    if (!this.isAdminPinValid(pin)) return this.error("Nieprawidłowy kod PIN administratora.");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const stations = DB.getRowsAsObjects("Stanowiska");
@@ -199,8 +211,7 @@ const API = {
   /** Oznaczanie, że nagroda za komplet została fizycznie wydana */
   issueReward(payload) {
     const { pin, participant_id } = payload;
-    const correctPin = DB.getSetting("admin_pin");
-    if (pin !== correctPin) return this.error("Odmowa dostępu");
+    if (!this.isAdminPinValid(pin)) return this.error("Odmowa dostępu");
     
     if (!participant_id) return this.error("Brakujące ID do nagrody");
 

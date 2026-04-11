@@ -51,7 +51,7 @@ Zbudowano aplikację typu SPA (Single Page Application) ze strukturą Vite. Oskr
 - Stan klienta (Participant ID) jest zapisywany w `localStorage`, żeby uczeń wbiegając na salę nie musiał się co stół logować.
 
 ## Podsumowanie - Etap 3: Panel Admina i Ostateczne Wdrożenie
-Stworzyliśmy wyizolowany podprojekt interfejsu (Admin Panel) wewnątrz Frontendu dla organizatorów, zabezpieczony podstawowym hasłem (PIN: `14317`). Po stronie API (`Code.js`, `API.js`) wbudowano metody zwracające kompleksowe statystyki oraz pełną historię tabel uczestników do weryfikacji manualnej. Dodano na repozytorium GitHub skrypt typu Action (CI/CD) hostujący automatycznie aplikację.
+Stworzyliśmy wyizolowany podprojekt interfejsu (Admin Panel) wewnątrz Frontendu dla organizatorów, zabezpieczony hasłem administratora pobieranym z arkusza `Ustawienia`. Po stronie API (`Code.js`, `API.js`) wbudowano metody zwracające kompleksowe statystyki oraz pełną historię tabel uczestników do weryfikacji manualnej. Dodano na repozytorium GitHub skrypt typu Action (CI/CD) hostujący automatycznie aplikację.
 
 ### Osiągnięcia Techniczne:
 - `admin.html` oraz `admin.js` stworzone w zgodzie ze stylem (Glassmorphism & Gridy). Moduł działa całkowicie niezależnie od ścieżki logowania standardowego uczestnika.
@@ -71,3 +71,6 @@ Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa
 - Po zmianach backendu Apps Script wykonywać `clasp push` oraz utrzymywać aktywny deployment Web App zgodny z frontendem.
 - Po każdej istotnej zmianie architektury aktualizować ten plik (`AGENT.md`) jako źródło prawdy.
 - Korekta operacyjna (2026-04-11): endpoint `@HEAD` Apps Script może wymagać autoryzacji i powodować błąd "Błąd połączenia z serwerem" w produkcji. Frontend ma używać wyłącznie publicznego deploymentu wersjonowanego (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`.
+- Korekta backendu (2026-04-11): walidacja PIN admina została znormalizowana (`String(...).trim()`), aby działała poprawnie niezależnie od typu w arkuszu (`number` vs `string`) i spacji.
+- Korekta backendu (2026-04-11): usunięto fallbacki i hardcoded PIN z kodu; autoryzacja admina opiera się wyłącznie na `admin_pin` z arkusza `Ustawienia`.
+- Stabilizacja auth admina (2026-04-11): porównanie PIN działa po normalizacji `String(...).trim()`, dzięki czemu działa dla wartości zapisanych jako liczba lub tekst.
