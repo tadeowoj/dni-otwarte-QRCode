@@ -59,3 +59,14 @@ Stworzyliśmy wyizolowany podprojekt interfejsu (Admin Panel) wewnątrz Frontend
 
 ### TODO (W pełni zakończony proces)
 Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa na przyjęcie uczniów.
+
+## Aktualizacja architektury - 2026-04-11
+- Frontend (Vite) został przełączony na build wielostronicowy: `index.html` i `admin.html` są jawnie ustawione jako wejścia w `frontend/vite.config.js` (`build.rollupOptions.input`).
+- Hosting GitHub Pages działa na custom domenie `qr.zsoiz-czyzew.pl`; panel administratora jest dostępny pod `/admin.html` po wdrożeniu artefaktu z obu stronami.
+- Backend Google Apps Script: frontend był podpięty do starego deploymentu Web App (`@1`), który nie zawierał akcji `get_admin_data`. Frontend został przepięty na aktualny deployment (`@HEAD`) zgodny z aktualnym routerem (`get_admin_data`, `issue_reward`).
+- Operacyjnie: kod backendu został wypchnięty przez `clasp push`, a następnie frontend został zdeployowany przez GitHub Actions na `main`.
+
+## TODO operacyjne
+- Przy każdej zmianie endpointu Apps Script aktualizować URL w `frontend/main.js` i `frontend/admin.js` w tej samej zmianie.
+- Po zmianach backendu Apps Script wykonywać `clasp push` oraz utrzymywać aktywny deployment Web App zgodny z frontendem.
+- Po każdej istotnej zmianie architektury aktualizować ten plik (`AGENT.md`) jako źródło prawdy.
