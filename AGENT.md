@@ -70,3 +70,4 @@ Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa
 - Przy każdej zmianie endpointu Apps Script aktualizować URL w `frontend/main.js` i `frontend/admin.js` w tej samej zmianie.
 - Po zmianach backendu Apps Script wykonywać `clasp push` oraz utrzymywać aktywny deployment Web App zgodny z frontendem.
 - Po każdej istotnej zmianie architektury aktualizować ten plik (`AGENT.md`) jako źródło prawdy.
+- Korekta operacyjna (2026-04-11): endpoint `@HEAD` Apps Script może wymagać autoryzacji i powodować błąd "Błąd połączenia z serwerem" w produkcji. Frontend ma używać wyłącznie publicznego deploymentu wersjonowanego (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`.
