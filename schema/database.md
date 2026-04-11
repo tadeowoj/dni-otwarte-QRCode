@@ -17,9 +17,9 @@ Upewnij się, że stworzyłeś dokładnie *4 arkusze* (zakładki) o poniższych 
 Przejdź do każdego z arkuszy i w PIERWSZYM wierszu wpisz (w kolejnych kolumnach A, B, C...) podane poniżej nagłówki. Wykorzystujemy te nazwy bezpośrednio w kodzie, więc wpisz je *dokładnie tak jak podano*.
 
 ### Arkusz: "Uczestnicy"
-| A | B | C | D | E | F | G | H | I | J |
-|---|---|---|---|---|---|---|---|---|---|
-| `participant_id` | `first_name_last_name` | `nickname` | `school_name` | `created_at` | `codes_collected_count` | `is_complete` | `completed_at` | `reward_issued` | `status` |
+| A | B | C | D | E | F | G | H | I | J | K |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `participant_id` | `first_name_last_name` | `nickname` | `pin` | `school_name` | `created_at` | `codes_collected_count` | `is_complete` | `completed_at` | `reward_issued` | `status` |
 
 ### Arkusz: "Stanowiska"
 | A | B | C | D | E | F |

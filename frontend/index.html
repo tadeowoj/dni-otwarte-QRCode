@@ -4,77 +4,84 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Dni Otwarte - Gra QR</title>
-  
-  <!-- SEO & Meta -->
-  <meta name="description" content="Aplikacja konkursowa - Zbierz wszystkie kody w trakcie dni otwartych!" />
-  
-  <!-- Fonty: Inter i połączone czcionki geometryczne -->
+
+  <meta name="description" content="Aplikacja konkursowa - zbierz wszystkie kody w trakcie dni otwartych!" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  
+
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-
-  <!-- Animowane Tło (Glassmorphism blobs) -->
   <div class="bg-blob blob-purple"></div>
   <div class="bg-blob blob-neon-green"></div>
 
-  <!-- Główny Kontener Aplikacji -->
   <main id="app-container">
-    
-    <!-- Notyfikacje (Toast) -->
     <div id="toast" class="toast hidden"></div>
 
-    <!-- SEKCJA Loader -->
     <section id="view-loader" class="view active">
-       <div class="loader-spinner"></div>
-       <p class="loader-text">Ładowanie systemu...</p>
+      <div class="loader-spinner"></div>
+      <p class="loader-text">Ladowanie systemu...</p>
     </section>
 
-    <!-- SEKCJA Rejestracja -->
     <section id="view-register" class="view hidden">
       <div class="glass-card start-card">
         <h1 class="title">Witaj w grze! 🚀</h1>
-        <p class="subtitle">Odwiedzaj stanowiska, łap kody z plansz i zgarnij nagrodę niespodziankę na stoisku głównym!</p>
-        
-        <form id="register-form" class="form-layout">
+        <p class="subtitle">Nowe konto? Super. Wpisz dane i po chwili ustawisz PIN jak szef.</p>
+
+        <form id="register-form" class="form-layout auth-form auth-form-active">
           <div class="input-group">
-            <label for="reg-name">Imię i Nazwisko</label>
+            <label for="reg-name">Imie i nazwisko</label>
             <input type="text" id="reg-name" placeholder="np. Jan Kowalski" required>
           </div>
-          
+
           <div class="input-group">
-            <label for="reg-nick">Twój unikalny Nick</label>
+            <label for="reg-nick">Twoj unikalny nick</label>
             <input type="text" id="reg-nick" placeholder="np. Janko99" required>
           </div>
-          
+
           <div class="input-group">
-            <label for="reg-school">Szkoła podstawowa</label>
-            <input type="text" id="reg-school" placeholder="np. SP nr 1 w Czyżewie" required>
+            <label for="reg-school">Szkola podstawowa</label>
+            <input type="text" id="reg-school" placeholder="np. SP nr 1 w Czyzewie" required>
           </div>
-          
+
           <button type="submit" id="btn-register" class="btn-primary">
-            <span>Dołącz do gry</span>
-            <!-- Simple SVG icon -->
+            <span>Dolacz do gry</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </button>
+
+          <button type="button" id="btn-show-login" class="btn-secondary">Zaloguj</button>
+        </form>
+
+        <form id="login-form" class="form-layout auth-form auth-form-hidden">
+          <div class="input-group">
+            <label for="login-nick">Nick</label>
+            <input type="text" id="login-nick" placeholder="Twoj nick" required>
+          </div>
+
+          <div class="input-group">
+            <label for="login-pin">PIN (4 cyfry)</label>
+            <input type="password" id="login-pin" placeholder="1234" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" required>
+          </div>
+
+          <button type="submit" id="btn-login-user" class="btn-primary btn-login-user">
+            <span>Zaloguj</span>
+          </button>
+
+          <button type="button" id="btn-show-register" class="btn-secondary">Wroc do rejestracji</button>
         </form>
       </div>
     </section>
 
-    <!-- SEKCJA Dashboard (Panel użytkownika) -->
     <section id="view-dashboard" class="view hidden">
-      
-      <!-- Nagłówek (Sticky) -->
       <header class="glass-header">
         <div class="dashboard-header-bar">
           <div class="header-profile">
             <div class="avatar"><span id="avatar-letter">?</span></div>
             <div class="user-info">
               <h2 id="dash-nickname">Nick</h2>
-              <span id="dash-school" class="tag">Szkoła</span>
+              <span id="dash-school" class="tag">Szkola</span>
             </div>
           </div>
           <button id="btn-logout" class="btn-ghost" type="button">Wyloguj</button>
@@ -82,10 +89,9 @@
       </header>
 
       <div class="dashboard-content">
-        <!-- Sekcja postępu -->
         <div class="glass-card highlight-card">
           <div class="progress-info">
-            <h3>Twój postęp</h3>
+            <h3>Twoj postep</h3>
             <div class="progress-numbers"><strong id="dash-collected">0</strong> / <span id="dash-required">15</span></div>
           </div>
           <div class="progress-bar-container">
@@ -94,41 +100,58 @@
           <p id="progress-message" class="progress-status-msg">Zbieraj kody dalej!</p>
         </div>
 
-        <!-- Stanowiska Grid -->
-        <h3 class="section-title">Odwiedź stanowiska</h3>
-        <div id="stations-grid" class="stations-grid">
-           <!-- Dynamicznie wstrzykiwane kafelki z JS -->
-        </div>
+        <h3 class="section-title">Odwiedz stanowiska</h3>
+        <div id="stations-grid" class="stations-grid"></div>
       </div>
     </section>
 
-    <!-- SEKCJA Skanowania Pomyślnego (Przejsciowa) -->
     <section id="view-scan-result" class="view hidden center-content">
       <div class="glass-card result-card">
         <div id="scan-icon" class="status-icon success-icon">✨</div>
-        <h2 id="scan-title">Świetnie!</h2>
+        <h2 id="scan-title">Swietnie!</h2>
         <p id="scan-message">Stanowisko zaliczone. Zdobywasz kolejny punkt!</p>
-        <button id="btn-back-dash" class="btn-primary mt-4">Wróć do Panelu</button>
+        <button id="btn-back-dash" class="btn-primary mt-4">Wroc do panelu</button>
       </div>
     </section>
 
-    <!-- SEKCJA Zwycięstwo (Komplet pointów) -->
     <section id="view-complete" class="view hidden center-content">
       <div class="glass-card complete-card pulse-glow">
-        <h1 class="title clr-neon">SZACUN! 🏅</h1>
-        <p class="subtitle">Wykonałeś zadanie. Odszukaj organizatorów na auli głównej i pokaż ten ekran aby odebrać upominek.</p>
-        
+        <h1 class="title clr-neon">SZACUN! 🏆</h1>
+        <p class="subtitle">Wykonales zadanie. Odszukaj organizatorow na auli glownej i pokaz ten ekran aby odebrac upominek.</p>
+
         <div class="profile-badge">
-          <h2 id="comp-nickname">Zwycięzca</h2>
+          <h2 id="comp-nickname">Zwyciezca</h2>
           <p id="comp-school">SP...</p>
         </div>
-        
-        <p class="mt-4 text-small">Pokaż to organizatorom przed wyjściem!</p>
+
+        <p class="mt-4 text-small">Pokaz to organizatorom przed wyjsciem!</p>
       </div>
     </section>
-
   </main>
-  
+
+  <div id="pin-modal" class="modal-overlay" aria-hidden="true">
+    <div class="glass-card modal-card">
+      <h2>Ustaw swoj PIN</h2>
+      <p class="subtitle compact">Ten PIN posluzy Ci do kolejnych logowan. Tylko cyfry, bez magii: 4 znaki.</p>
+
+      <form id="pin-setup-form" class="form-layout">
+        <div class="input-group">
+          <label for="pin-create">PIN (4 cyfry)</label>
+          <input type="password" id="pin-create" placeholder="1234" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" required>
+        </div>
+
+        <div class="input-group">
+          <label for="pin-confirm">Powtorz PIN</label>
+          <input type="password" id="pin-confirm" placeholder="1234" inputmode="numeric" pattern="\d{4}" maxlength="4" autocomplete="off" required>
+        </div>
+
+        <button type="submit" id="btn-save-pin" class="btn-primary">
+          <span>Zapisz PIN i przejdz dalej</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script type="module" src="./main.js"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 /**
- * API.js - Logika biznesowa i kontrolery (wg Modułów Projektu)
+ * API.js - Logika biznesowa i kontrolery (wg modulow projektu)
  */
 
 const API = {
-  // Zwraca odpowiedź w spójnym formacie
+  // Zwraca odpowiedz w spojnym formacie
   success(data) {
     return { status: "success", data: data };
   },
@@ -16,7 +16,7 @@ const API = {
     return response;
   },
 
-  /** Ujednolicenie PIN-u z inputa i z arkusza (string/number/whitespace). */
+  // Ujednolicenie PIN-u z inputa i z arkusza (string/number/whitespace).
   normalizePin(pin) {
     return String(pin ?? "").trim();
   },
@@ -45,23 +45,26 @@ const API = {
     return enteredPin === configuredPin;
   },
 
-  /** M1: Rejestracja Uczestnika */
+  isParticipantPinValid(pin) {
+    return /^\d{4}$/.test(this.normalizePin(pin));
+  },
+
+  // M1: Rejestracja Uczestnika
   registerParticipant(payload) {
     const safePayload = payload || {};
     const first_name_last_name = this.normalizeNameOrSchool(safePayload.first_name_last_name);
     const nickname = this.normalizeNickname(safePayload.nickname);
     const school_name = this.normalizeNameOrSchool(safePayload.school_name);
 
-    // Walidacje
     if (!nickname || !first_name_last_name || !school_name) {
-      return this.error("Wszystkie pola są wymagane");
+      return this.error("Wszystkie pola sa wymagane");
     }
 
     const normalizedName = this.normalizeComparableNameOrSchool(first_name_last_name);
     const normalizedNickname = this.normalizeComparableNickname(nickname);
     const normalizedSchool = this.normalizeComparableNameOrSchool(school_name);
 
-    // Blokada równoległych zapisów: check + insert muszą być atomowe.
+    // Blokada rownoleglych zapisow: check + insert musza byc atomowe.
     const lock = LockService.getScriptLock();
     try {
       lock.waitLock(10000);
@@ -77,7 +80,7 @@ const API = {
 
       if (exists) {
         return this.error(
-          "Takie konto już istnieje (imię i nazwisko + nick + szkoła).",
+          "Takie konto juz istnieje (imie i nazwisko + nick + szkola).",
           "DUPLICATE_PARTICIPANT"
         );
       }
@@ -88,6 +91,7 @@ const API = {
         participant_id: participant_id,
         first_name_last_name: first_name_last_name,
         nickname: nickname,
+        pin: "",
         school_name: school_name,
         created_at: new Date().toISOString(),
         codes_collected_count: 0,
@@ -98,12 +102,12 @@ const API = {
       });
 
       return this.success({
-        message: "Zarejestrowano pomyślnie",
+        message: "Zarejestrowano pomyslnie",
         participant_id: participant_id,
         nickname: nickname
       });
     } catch (error) {
-      return this.error("Rejestracja chwilowo niedostępna. Spróbuj ponownie.");
+      return this.error("Rejestracja chwilowo niedostepna. Sprobuj ponownie.");
     } finally {
       if (lock.hasLock()) {
         lock.releaseLock();
@@ -111,9 +115,77 @@ const API = {
     }
   },
 
-  /** Pobieranie profilu Uczestnika (i wymagań do kompletu) */
+  setUserPin(payload) {
+    const safePayload = payload || {};
+    const participant_id = String(safePayload.participant_id ?? "").trim();
+    const pin = this.normalizePin(safePayload.pin);
+
+    if (!participant_id) {
+      return this.error("Brak ID uczestnika.");
+    }
+
+    if (!this.isParticipantPinValid(pin)) {
+      return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
+    }
+
+    const participants = DB.getRowsAsObjects("Uczestnicy");
+    const participant = participants.find((p) => String(p.participant_id) === participant_id);
+
+    if (!participant) {
+      return this.error("Nie znaleziono uczestnika.");
+    }
+
+    DB.updateRow("Uczestnicy", participant._rowIndex, { pin: pin });
+
+    return this.success({
+      message: "PIN ustawiony poprawnie.",
+      participant_id: participant.participant_id,
+      nickname: participant.nickname
+    });
+  },
+
+  loginUser(payload) {
+    const safePayload = payload || {};
+    const nickname = this.normalizeNickname(safePayload.nickname);
+    const pin = this.normalizePin(safePayload.pin);
+
+    if (!nickname || !pin) {
+      return this.error("Podaj nick i PIN.", "INVALID_CREDENTIALS");
+    }
+
+    if (!this.isParticipantPinValid(pin)) {
+      return this.error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
+    }
+
+    const participants = DB.getRowsAsObjects("Uczestnicy");
+    const participant = participants.find((p) => this.normalizeNickname(p.nickname) === nickname);
+
+    if (!participant) {
+      return this.error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+    }
+
+    const storedPin = this.normalizePin(participant.pin);
+    if (!storedPin) {
+      return this.error(
+        "To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.",
+        "PIN_NOT_SET"
+      );
+    }
+
+    if (storedPin !== pin) {
+      return this.error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+    }
+
+    return this.success({
+      message: "Zalogowano pomyslnie.",
+      participant_id: participant.participant_id,
+      nickname: participant.nickname
+    });
+  },
+
+  // Pobieranie profilu Uczestnika (i wymagan do kompletu)
   getParticipantProfile(participant_id) {
-    if (!participant_id) return this.error("Brak ID Uczestnika");
+    if (!participant_id) return this.error("Brak ID uczestnika");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const participant = participants.find((p) => p.participant_id === participant_id);
@@ -128,31 +200,29 @@ const API = {
     });
   },
 
-  /** M2: Stanowiska / Skanowanie */
+  // M2: Stanowiska / Skanowanie
   getStations() {
     const stations = DB.getRowsAsObjects("Stanowiska");
-    // Pokażemy wszystkie aktywne i ich rodzaj
     return this.success({ stations: stations });
   },
 
-  /** Logika głównego skanowania kodu QR */
+  // Logika glownego skanowania kodu QR
   scanCode(payload) {
-    const { participant_id, station_code } = payload;
-    if (!participant_id || !station_code) return this.error("Brakujące dane do skanowania.");
+    const participant_id = payload.participant_id;
+    const station_code = payload.station_code;
 
-    // 1. Walidacja Uczestnika
+    if (!participant_id || !station_code) return this.error("Brakujace dane do skanowania.");
+
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const participant = participants.find((p) => p.participant_id === participant_id);
-    if (!participant) return this.error("Uczestnik nie istnieje, zaloguj się ponownie.");
-    if (participant.is_complete === true) return this.error("Masz już zdobyty komplet! Trwa weryfikacja do nagrody.");
+    if (!participant) return this.error("Uczestnik nie istnieje, zaloguj sie ponownie.");
+    if (participant.is_complete === true) return this.error("Masz juz zdobyty komplet! Trwa weryfikacja do nagrody.");
 
-    // 2. Walidacja Stanowiska
     const stations = DB.getRowsAsObjects("Stanowiska");
     const station = stations.find((s) => s.station_code === station_code);
-    if (!station) return this.error("Kod nieprawidłowy, to stanowisko nie istnieje.");
-    if (station.is_active !== true && station.is_active !== "TRUE") return this.error("Stanowisko jest obecnie wyłączone.");
+    if (!station) return this.error("Kod nieprawidlowy, to stanowisko nie istnieje.");
+    if (station.is_active !== true && station.is_active !== "TRUE") return this.error("Stanowisko jest obecnie wylaczone.");
 
-    // 3. Weryfikacja Duplikatów Skana M3
     const scans = DB.getRowsAsObjects("Skanowania");
     const alreadyScanned = scans.find((s) => s.participant_id === participant_id && s.station_code === station_code);
 
@@ -161,9 +231,8 @@ const API = {
 
     if (alreadyScanned) {
       scanResultStatus = "duplicate";
-      message = "Uwaga: To stanowisko masz już zaliczone!";
+      message = "Uwaga: To stanowisko masz juz zaliczone!";
 
-      // Zapisujemy log jako duplicate, ale nie przerywamy i nie punktujemy w górę
       DB.insertRow("Skanowania", {
         scan_id: "S_" + new Date().getTime(),
         timestamp: new Date().toISOString(),
@@ -173,10 +242,9 @@ const API = {
         station_name: station.station_name,
         scan_result: scanResultStatus
       });
-      return this.success({ message: message }); // zwracamy tak, bo to sukces ale bez +1
+      return this.success({ message: message });
     }
 
-    // Zaliczenie punktowe - zapis skanu M3
     DB.insertRow("Skanowania", {
       scan_id: "S_" + new Date().getTime(),
       timestamp: new Date().toISOString(),
@@ -187,11 +255,9 @@ const API = {
       scan_result: "ok"
     });
 
-    // Aktualizacja rekordu Uczestnika M4
     let newCount = parseInt(participant.codes_collected_count) || 0;
     newCount += 1;
 
-    // Sprawdzamy komplet ustawień
     const required_count = parseInt(DB.getSetting("required_codes_count")) || 15;
     const isComplete = newCount >= required_count;
 
@@ -215,7 +281,7 @@ const API = {
     });
   },
 
-  /** Statystyki do Dashboardu / Admina */
+  // Statystyki do dashboardu / admina
   getStats() {
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const stations = DB.getRowsAsObjects("Stanowiska");
@@ -232,15 +298,14 @@ const API = {
     });
   },
 
-  /** M6: Panel Administratora - Pobieranie pełnych tabel i statystyk */
+  // M6: Panel administratora - pobieranie pelnych tabel i statystyk
   getAdminData(pin) {
-    if (!this.isAdminPinValid(pin)) return this.error("Nieprawidłowy kod PIN administratora.");
+    if (!this.isAdminPinValid(pin)) return this.error("Nieprawidlowy kod PIN administratora.");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const stations = DB.getRowsAsObjects("Stanowiska");
     const scans = DB.getRowsAsObjects("Skanowania");
 
-    // Odwracamy tabele chronologicznie (najnowsze u góry)
     participants.reverse();
 
     return this.success({
@@ -255,19 +320,20 @@ const API = {
     });
   },
 
-  /** Oznaczanie, że nagroda za komplet została fizycznie wydana */
+  // Oznaczenie, ze nagroda za komplet zostala fizycznie wydana
   issueReward(payload) {
-    const { pin, participant_id } = payload;
-    if (!this.isAdminPinValid(pin)) return this.error("Odmowa dostępu");
+    const pin = payload.pin;
+    const participant_id = payload.participant_id;
 
-    if (!participant_id) return this.error("Brakujące ID do nagrody");
+    if (!this.isAdminPinValid(pin)) return this.error("Odmowa dostepu");
+    if (!participant_id) return this.error("Brakujace ID do nagrody");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const participant = participants.find((p) => p.participant_id === participant_id);
 
-    if (!participant) return this.error("Uczeń nie istnieje.");
+    if (!participant) return this.error("Uczen nie istnieje.");
     if (participant.is_complete !== true && participant.is_complete !== "TRUE") {
-      return this.error("Temu graczowi fizycznie brakuje punktów do kompletu!");
+      return this.error("Temu graczowi fizycznie brakuje punktow do kompletu!");
     }
 
     DB.updateRow("Uczestnicy", participant._rowIndex, { reward_issued: true });

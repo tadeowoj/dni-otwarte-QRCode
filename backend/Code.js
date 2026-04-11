@@ -47,6 +47,12 @@ function doPost(e) {
       case "register":
         result = API.registerParticipant(payload);
         break;
+      case "set_user_pin":
+        result = API.setUserPin(payload);
+        break;
+      case "login_user":
+        result = API.loginUser(payload);
+        break;
       case "get_profile":
         result = API.getParticipantProfile(payload.participant_id);
         break;

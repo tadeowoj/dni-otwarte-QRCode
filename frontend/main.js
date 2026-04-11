@@ -2,43 +2,76 @@
 // KONFIGURACJA & ZMIENNE GLOBALNE
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbzzfHo60slLnqPG6ljFOJ10J8vy26AirEao8LjHoUOSQ2N6NR3D4FBUmjIhUHLHWw7h/exec";
+const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 
 const STATE = {
-  participantId: localStorage.getItem('qr_participant_id') || null,
-  nickname: localStorage.getItem('qr_nickname') || null,
+  participantId: localStorage.getItem("qr_participant_id") || null,
+  nickname: localStorage.getItem("qr_nickname") || null,
   stations: [],
-  pendingScanCode: new URLSearchParams(window.location.search).get('code')
+  pendingScanCode: new URLSearchParams(window.location.search).get("code"),
+  pendingRegistration: null
 };
 
 // =========================================================================
-// SYSTEM WIDOKÓW I INTERFEJSU
+// SYSTEM WIDOKOW I INTERFEJSU
 // =========================================================================
 const views = {
-  loader: document.getElementById('view-loader'),
-  register: document.getElementById('view-register'),
-  dashboard: document.getElementById('view-dashboard'),
-  scanResult: document.getElementById('view-scan-result'),
-  complete: document.getElementById('view-complete')
+  loader: document.getElementById("view-loader"),
+  register: document.getElementById("view-register"),
+  dashboard: document.getElementById("view-dashboard"),
+  scanResult: document.getElementById("view-scan-result"),
+  complete: document.getElementById("view-complete")
 };
 
+const pinModal = document.getElementById("pin-modal");
+const registerForm = document.getElementById("register-form");
+const loginForm = document.getElementById("login-form");
+
 function hideAllViews() {
-  Object.values(views).forEach(v => v.classList.remove('active'));
+  Object.values(views).forEach((v) => v.classList.remove("active"));
 }
 
 function showView(viewName) {
   hideAllViews();
   if (views[viewName]) {
-    views[viewName].classList.add('active');
+    views[viewName].classList.add("active");
   }
 }
 
 function showToast(message, isError = false) {
-  const toast = document.getElementById('toast');
+  const toast = document.getElementById("toast");
   toast.innerText = message;
-  toast.className = `toast show ${isError ? 'error' : ''}`;
+  toast.className = `toast show ${isError ? "error" : ""}`;
   setTimeout(() => {
-    toast.classList.remove('show');
+    toast.classList.remove("show");
   }, 4000);
+}
+
+function openPinModal() {
+  pinModal.classList.add("active");
+  pinModal.setAttribute("aria-hidden", "false");
+  document.getElementById("pin-create").value = "";
+  document.getElementById("pin-confirm").value = "";
+  document.getElementById("pin-create").focus();
+}
+
+function closePinModal() {
+  pinModal.classList.remove("active");
+  pinModal.setAttribute("aria-hidden", "true");
+}
+
+function showRegisterForm() {
+  registerForm.classList.remove("auth-form-hidden");
+  registerForm.classList.add("auth-form-active");
+  loginForm.classList.add("auth-form-hidden");
+  loginForm.classList.remove("auth-form-active");
+}
+
+function showLoginForm() {
+  loginForm.classList.remove("auth-form-hidden");
+  loginForm.classList.add("auth-form-active");
+  registerForm.classList.add("auth-form-hidden");
+  registerForm.classList.remove("auth-form-active");
 }
 
 // =========================================================================
@@ -46,7 +79,6 @@ function showToast(message, isError = false) {
 // =========================================================================
 async function fetchAPI(action, payload) {
   try {
-    // Wysyłamy jako text/plain by uniknąć rygorystycznego CORS Preflight od Google
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -55,42 +87,48 @@ async function fetchAPI(action, payload) {
     const result = await response.json();
     return result;
   } catch (err) {
-    console.error("Błąd sieci:", err);
-    return { status: "error", message: "Brak stabilnego połączenia z serwerem." };
+    console.error("Blad sieci:", err);
+    return { status: "error", message: "Brak stabilnego polaczenia z serwerem." };
   }
 }
 
+function startParticipantSession(participantId, nickname) {
+  STATE.participantId = participantId;
+  STATE.nickname = nickname;
+  localStorage.setItem("qr_participant_id", participantId);
+  localStorage.setItem("qr_nickname", nickname);
+}
+
 function logoutParticipant() {
-  const confirmLogout = window.confirm("Na pewno chcesz się wylogować?");
+  const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
-  localStorage.removeItem('qr_participant_id');
-  localStorage.removeItem('qr_nickname');
+  localStorage.removeItem("qr_participant_id");
+  localStorage.removeItem("qr_nickname");
   STATE.participantId = null;
   STATE.nickname = null;
   STATE.pendingScanCode = null;
 
-  showView('register');
-  showToast('Wylogowano.');
+  showRegisterForm();
+  showView("register");
+  showToast("Wylogowano.");
 }
 
 // =========================================================================
-// INICJALIZACJA I LOGIKA GŁÓWNA
+// INICJALIZACJA I LOGIKA GLOWNA
 // =========================================================================
 async function initApp() {
-  
   if (!STATE.participantId) {
+    showRegisterForm();
     if (STATE.pendingScanCode) {
-      showToast("Aby zeskanować kod, musisz się najpierw zapisać!", true);
+      showToast("Aby zeskanowac kod, musisz sie najpierw zalogowac lub zarejestrowac.", true);
     }
-    showView('register');
+    showView("register");
     return;
   }
 
-  // Mamy uczestnika w pamięci. Jeśli mamy kod w URL - próbujemy skanować od razu.
   if (STATE.pendingScanCode) {
     await handleScanCode(STATE.pendingScanCode);
-    // Czyścimy url z kodu by odświeżenie nie nabijało błędu
     window.history.replaceState({}, document.title, window.location.pathname);
     STATE.pendingScanCode = null;
   } else {
@@ -101,28 +139,32 @@ async function initApp() {
 // =========================================================================
 // FORMULARZ REJESTRACJI
 // =========================================================================
-document.getElementById('register-form').addEventListener('submit', async (e) => {
+document.getElementById("register-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  
-  const name = document.getElementById('reg-name').value.trim();
-  const nick = document.getElementById('reg-nick').value.trim();
-  const school = document.getElementById('reg-school').value.trim();
-  
-  if(!name || !nick || !school) return;
 
-  const btn = document.getElementById('btn-register');
-  btn.innerHTML = 'Rejestrowanie...';
+  const name = document.getElementById("reg-name").value.trim();
+  const nick = document.getElementById("reg-nick").value.trim();
+  const school = document.getElementById("reg-school").value.trim();
+
+  if (!name || !nick || !school) return;
+
+  const btn = document.getElementById("btn-register");
+  btn.innerHTML = "Rejestrowanie...";
   btn.disabled = true;
 
-  const res = await fetchAPI("register", { first_name_last_name: name, nickname: nick, school_name: school });
-  
-  btn.innerHTML = 'Dołącz do gry';
+  const res = await fetchAPI("register", {
+    first_name_last_name: name,
+    nickname: nick,
+    school_name: school
+  });
+
+  btn.innerHTML = "Dolacz do gry";
   btn.disabled = false;
 
   if (res.status === "error") {
     if (res.error_code === "DUPLICATE_PARTICIPANT") {
-      showToast(res.message || "Takie konto już istnieje. Sprawdź dane i spróbuj ponownie.", true);
-      const nickInput = document.getElementById('reg-nick');
+      showToast(res.message || "Takie konto juz istnieje. Sprawdz dane i sprobuj ponownie.", true);
+      const nickInput = document.getElementById("reg-nick");
       nickInput.focus();
       nickInput.select();
       return;
@@ -131,41 +173,140 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     return;
   }
 
-  // Sukces
-  STATE.participantId = res.data.participant_id;
-  STATE.nickname = res.data.nickname;
-  localStorage.setItem('qr_participant_id', STATE.participantId);
-  localStorage.setItem('qr_nickname', STATE.nickname);
-  
-  // Jeśli po wejściu chciał zeskanować:
-  initApp();
+  STATE.pendingRegistration = {
+    participantId: res.data.participant_id,
+    nickname: res.data.nickname
+  };
+
+  openPinModal();
+  showToast("Konto utworzone. Ustaw teraz PIN i lecimy dalej.");
+});
+
+document.getElementById("btn-show-login").addEventListener("click", () => {
+  showLoginForm();
+  document.getElementById("login-nick").focus();
+});
+
+document.getElementById("btn-show-register").addEventListener("click", () => {
+  showRegisterForm();
+  document.getElementById("reg-name").focus();
 });
 
 // =========================================================================
-// ŁADOWANIE PANELU (DASHBOARD)
+// FORMULARZ LOGOWANIA
+// =========================================================================
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const nickname = document.getElementById("login-nick").value.trim();
+  const pin = document.getElementById("login-pin").value.trim();
+
+  if (!nickname || !pin) {
+    showToast("Podaj nick i PIN.", true);
+    return;
+  }
+
+  if (!PARTICIPANT_PIN_REGEX.test(pin)) {
+    showToast("PIN musi miec dokladnie 4 cyfry.", true);
+    return;
+  }
+
+  const btn = document.getElementById("btn-login-user");
+  btn.innerText = "Logowanie...";
+  btn.disabled = true;
+
+  const res = await fetchAPI("login_user", { nickname, pin });
+
+  btn.innerText = "Zaloguj";
+  btn.disabled = false;
+
+  if (res.status === "error") {
+    if (res.error_code === "PIN_NOT_SET") {
+      showToast(res.message || "To konto nie ma ustawionego PIN-u. Skontaktuj sie z administratorem.", true);
+      return;
+    }
+    showToast(res.message || "Nieprawidlowy nick lub PIN.", true);
+    return;
+  }
+
+  startParticipantSession(res.data.participant_id, res.data.nickname);
+  showToast("Zalogowano pomyslnie!");
+  await initApp();
+});
+
+// =========================================================================
+// MODAL USTAWIANIA PIN
+// =========================================================================
+document.getElementById("pin-setup-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (!STATE.pendingRegistration || !STATE.pendingRegistration.participantId) {
+    showToast("Brak danych nowego konta. Sprobuj ponownie.", true);
+    closePinModal();
+    return;
+  }
+
+  const pin = document.getElementById("pin-create").value.trim();
+  const pinConfirm = document.getElementById("pin-confirm").value.trim();
+
+  if (!PARTICIPANT_PIN_REGEX.test(pin)) {
+    showToast("PIN musi miec dokladnie 4 cyfry.", true);
+    return;
+  }
+
+  if (pin !== pinConfirm) {
+    showToast("PIN-y sa rozne. Sprobuj jeszcze raz.", true);
+    return;
+  }
+
+  const btn = document.getElementById("btn-save-pin");
+  btn.innerText = "Zapisywanie...";
+  btn.disabled = true;
+
+  const res = await fetchAPI("set_user_pin", {
+    participant_id: STATE.pendingRegistration.participantId,
+    pin: pin
+  });
+
+  btn.innerText = "Zapisz PIN i przejdz dalej";
+  btn.disabled = false;
+
+  if (res.status === "error") {
+    showToast(res.message || "Nie udalo sie zapisac PIN-u.", true);
+    return;
+  }
+
+  startParticipantSession(STATE.pendingRegistration.participantId, STATE.pendingRegistration.nickname);
+  STATE.pendingRegistration = null;
+  closePinModal();
+  showToast("PIN ustawiony. Startujemy!");
+  await initApp();
+});
+
+// =========================================================================
+// LADOWANIE PANELU (DASHBOARD)
 // =========================================================================
 async function loadDashboard() {
-  showView('loader');
-  
-  // Pobieramy dane usera i liste stanowisk równolegle dla optymalizacji
+  showView("loader");
+
   const [profileRes, stationsRes] = await Promise.all([
     fetchAPI("get_profile", { participant_id: STATE.participantId }),
     fetchAPI("get_stations", {})
   ]);
 
   if (profileRes.status === "error") {
-    // Gdyby id zagubił się na serwerze - bezpieczny fallback
-    localStorage.removeItem('qr_participant_id');
+    localStorage.removeItem("qr_participant_id");
+    localStorage.removeItem("qr_nickname");
     STATE.participantId = null;
     showToast(profileRes.message, true);
-    showView('register');
+    showView("register");
     return;
   }
 
-  const { participant, required_codes_count } = profileRes.data;
+  const participant = profileRes.data.participant;
+  const required_codes_count = profileRes.data.required_codes_count;
   STATE.stations = stationsRes.data && stationsRes.data.stations ? stationsRes.data.stations : [];
 
-  // Jeśli gracz ma powiedzmy 15 / 15 i flaga complete wskakuje...
   if (participant.is_complete === true || participant.is_complete === "TRUE") {
     renderCompleteScreen(participant);
     return;
@@ -175,99 +316,91 @@ async function loadDashboard() {
 }
 
 function renderDashboard(participant, reqCount) {
-  document.getElementById('dash-nickname').innerText = participant.nickname;
-  document.getElementById('dash-school').innerText = participant.school_name;
-  document.getElementById('avatar-letter').innerText = participant.nickname.charAt(0).toUpperCase();
+  document.getElementById("dash-nickname").innerText = participant.nickname;
+  document.getElementById("dash-school").innerText = participant.school_name;
+  document.getElementById("avatar-letter").innerText = participant.nickname.charAt(0).toUpperCase();
 
   const collected = parseInt(participant.codes_collected_count) || 0;
-  document.getElementById('dash-collected').innerText = collected;
-  document.getElementById('dash-required').innerText = reqCount;
-  
+  document.getElementById("dash-collected").innerText = collected;
+  document.getElementById("dash-required").innerText = reqCount;
+
   const percentage = Math.min((collected / reqCount) * 100, 100);
   setTimeout(() => {
-    document.getElementById('progress-bar-fill').style.width = percentage + '%';
+    document.getElementById("progress-bar-fill").style.width = percentage + "%";
   }, 100);
 
-  // Generowanie elementów listy stacji
-  const grid = document.getElementById('stations-grid');
-  grid.innerHTML = '';
-  
-  // Niestety, w obecnym design API z PROJEKT.md pełna lista ZALICZONYCH 
-  // stacji nie jest wysyłana w get_profile domyślnie.
-  // Zakładamy na razie ślepy grid pokazujący tylko bazę. (By to ulepszyć w MVP, można w API.js dokleić historię skanów usera).
-  
-  STATE.stations.forEach(st => {
-     if (st.is_active !== "TRUE" && st.is_active !== true) return; // Ukrywamy nieaktywne
+  const grid = document.getElementById("stations-grid");
+  grid.innerHTML = "";
 
-     const el = document.createElement('div');
-     // Do celów Demo/MVP traktujemy jako "do odnalezienia"
-     el.className = 'station-card';
-     el.innerHTML = `
-        <div class="card-icon">🎯</div>
-        <span class="card-title">${st.station_name}</span>
-     `;
-     grid.appendChild(el);
+  STATE.stations.forEach((st) => {
+    if (st.is_active !== "TRUE" && st.is_active !== true) return;
+
+    const el = document.createElement("div");
+    el.className = "station-card";
+    el.innerHTML = `
+      <div class="card-icon">🎯</div>
+      <span class="card-title">${st.station_name}</span>
+    `;
+    grid.appendChild(el);
   });
 
-  showView('dashboard');
+  showView("dashboard");
 }
 
 // =========================================================================
-// OBSŁUGA SKANOWANIA
+// OBSLUGA SKANOWANIA
 // =========================================================================
 async function handleScanCode(code) {
-  showView('loader');
-  
+  showView("loader");
+
   const res = await fetchAPI("scan_code", {
-     participant_id: STATE.participantId,
-     station_code: code
+    participant_id: STATE.participantId,
+    station_code: code
   });
 
   if (res.status === "error") {
-     showToast(res.message, true);
-     await loadDashboard(); // wracamy z widoku ładowania
-     return;
+    showToast(res.message, true);
+    await loadDashboard();
+    return;
   }
 
-  // Sukces skanowania lub duplikat skanowania (też success ale z inna informacja, obslugujemy to plynnie w API)
   if (res.data.is_complete) {
-     // Przekierowanie do zwycięstwa poprzez pobranie pelnych statystyk
-     await loadDashboard(); 
+    await loadDashboard();
   } else {
-     // Pokaż ekran z sukcesem tymczasowym (view-scan-result)
-     document.getElementById('scan-title').innerText = res.data.message.includes("już zaliczone") ? "Hej!" : "Świetnie!";
-     document.getElementById('scan-message').innerText = res.data.message;
-     
-     if (res.data.message.includes("już zaliczone")) {
-        document.getElementById('scan-icon').innerText = 'ℹ️';
-        document.getElementById('scan-icon').className = 'status-icon';
-     } else {
-        document.getElementById('scan-icon').innerText = '✨';
-        document.getElementById('scan-icon').className = 'status-icon success-icon';
-     }
+    const isDuplicate = res.data.message.includes("juz zaliczone");
+    document.getElementById("scan-title").innerText = isDuplicate ? "Hej!" : "Swietnie!";
+    document.getElementById("scan-message").innerText = res.data.message;
 
-     showView('scanResult');
+    if (isDuplicate) {
+      document.getElementById("scan-icon").innerText = "ℹ️";
+      document.getElementById("scan-icon").className = "status-icon";
+    } else {
+      document.getElementById("scan-icon").innerText = "✨";
+      document.getElementById("scan-icon").className = "status-icon success-icon";
+    }
+
+    showView("scanResult");
   }
 }
 
-document.getElementById('btn-back-dash').addEventListener('click', () => {
-   loadDashboard();
+document.getElementById("btn-back-dash").addEventListener("click", () => {
+  loadDashboard();
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => {
+document.getElementById("btn-logout").addEventListener("click", () => {
   logoutParticipant();
 });
 
 // =========================================================================
-// EKRAN KOŃCOWY
+// EKRAN KONCOWY
 // =========================================================================
 function renderCompleteScreen(participant) {
-  document.getElementById('comp-nickname').innerText = participant.nickname;
-  document.getElementById('comp-school').innerText = participant.school_name;
-  showView('complete');
+  document.getElementById("comp-nickname").innerText = participant.nickname;
+  document.getElementById("comp-school").innerText = participant.school_name;
+  showView("complete");
 }
 
 // =========================================================================
 // START APLIKACJI
 // =========================================================================
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener("DOMContentLoaded", initApp);
