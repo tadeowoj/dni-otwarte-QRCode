@@ -60,6 +60,20 @@ async function fetchAPI(action, payload) {
   }
 }
 
+function logoutParticipant() {
+  const confirmLogout = window.confirm("Na pewno chcesz się wylogować?");
+  if (!confirmLogout) return;
+
+  localStorage.removeItem('qr_participant_id');
+  localStorage.removeItem('qr_nickname');
+  STATE.participantId = null;
+  STATE.nickname = null;
+  STATE.pendingScanCode = null;
+
+  showView('register');
+  showToast('Wylogowano.');
+}
+
 // =========================================================================
 // INICJALIZACJA I LOGIKA GŁÓWNA
 // =========================================================================
@@ -238,6 +252,10 @@ async function handleScanCode(code) {
 
 document.getElementById('btn-back-dash').addEventListener('click', () => {
    loadDashboard();
+});
+
+document.getElementById('btn-logout').addEventListener('click', () => {
+  logoutParticipant();
 });
 
 // =========================================================================

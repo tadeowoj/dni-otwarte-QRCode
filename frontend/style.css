@@ -180,14 +180,38 @@
     transition: transform 0.2s, box-shadow 0.2s;
     font-family: var(--font-body);
   }
-  .btn-primary:active { transform: scale(0.98); }
-  .btn-icon { width: 20px; height: 20px; }
-  .mt-4 { margin-top: 1.5rem; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-icon { width: 20px; height: 20px; }
+.mt-4 { margin-top: 1.5rem; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--clr-text);
+  border: 1px solid var(--clr-glass-border);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
   
   /* =========================================================================
      ROZDZIAŁ 7: PANEL - HEADER & PASEK POSTĘPU
      ========================================================================= */
-  .header-profile { display: flex; align-items: center; gap: 12px; }
+.header-profile { display: flex; align-items: center; gap: 12px; }
+.dashboard-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
   .avatar {
     width: 48px;
     height: 48px;

@@ -74,3 +74,22 @@ Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa
 - Korekta backendu (2026-04-11): walidacja PIN admina została znormalizowana (`String(...).trim()`), aby działała poprawnie niezależnie od typu w arkuszu (`number` vs `string`) i spacji.
 - Korekta backendu (2026-04-11): usunięto fallbacki i hardcoded PIN z kodu; autoryzacja admina opiera się wyłącznie na `admin_pin` z arkusza `Ustawienia`.
 - Stabilizacja auth admina (2026-04-11): porównanie PIN działa po normalizacji `String(...).trim()`, dzięki czemu działa dla wartości zapisanych jako liczba lub tekst.
+
+## Aktualizacja architektury - 2026-04-11 (unikalnosc rejestracji)
+- Rejestracja w backendzie (`backend/API.js`) waliduje duplikat po pelnym zestawie: `first_name_last_name + nickname + school_name`.
+- Porownanie duplikatu jest normalizowane (`trim`, redukcja wielokrotnych spacji dla imienia/szkoly, `toLowerCase`), dzieki czemu rozne wielkosci liter i nadmiarowe spacje nie omijaja blokady.
+- Endpoint `register` zwraca kod bledu `DUPLICATE_PARTICIPANT` przy probie utworzenia konta z tym samym zestawem danych.
+- Sekcja rejestracji jest zabezpieczona `LockService.getScriptLock()`, aby rownolegle zadania nie tworzyly duplikatow przy check+insert.
+- Frontend (`frontend/main.js`) obsluguje `DUPLICATE_PARTICIPANT` dedykowanym komunikatem i fokusuje pole nick.
+
+## TODO operacyjne
+- Po wdrozeniu backendu do Apps Script wykonac `clasp push`, a nastepnie zweryfikowac recznie 5 scenariuszy rejestracji (duplikat pelnego zestawu, inne szkoly, roznice liter/spacji, rownolegle submity, rozny nick).
+
+## Aktualizacja architektury - 2026-04-11 (przycisk wylogowania)
+- W dashboardzie uczestnika dodano mały przycisk `Wyloguj` w naglowku (`frontend/index.html`, `frontend/style.css`) jako wariant ghost.
+- Wylogowanie jest lokalne po stronie frontendu (`frontend/main.js`) i nie wymaga endpointu backendowego.
+- Klikniecie `Wyloguj` uruchamia potwierdzenie (`window.confirm`), a po akceptacji czyści `localStorage` (`qr_participant_id`, `qr_nickname`), resetuje stan sesji i przenosi do widoku rejestracji.
+
+## TODO operacyjne
+- Przy kolejnej publikacji frontendu wykonac `npm run build` i wdrozenie GitHub Pages, aby przycisk `Wyloguj` byl widoczny na produkcji.
+- Po wdrozeniu recznie sprawdzic scenariusze: anulowanie wylogowania, potwierdzenie wylogowania, odswiezenie strony po wylogowaniu.
