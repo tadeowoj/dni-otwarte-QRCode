@@ -174,7 +174,8 @@ const API = {
 
   /** M6: Panel Administratora - Pobieranie pełnych tabel i statystyk */
   getAdminData(pin) {
-    if (pin !== "14317") return this.error("Nieprawidłowy kod PIN administratora.");
+    const correctPin = DB.getSetting("admin_pin");
+    if (pin !== correctPin) return this.error("Nieprawidłowy kod PIN administratora.");
 
     const participants = DB.getRowsAsObjects("Uczestnicy");
     const stations = DB.getRowsAsObjects("Stanowiska");
@@ -198,7 +199,8 @@ const API = {
   /** Oznaczanie, że nagroda za komplet została fizycznie wydana */
   issueReward(payload) {
     const { pin, participant_id } = payload;
-    if (pin !== "14317") return this.error("Odmowa dostępu");
+    const correctPin = DB.getSetting("admin_pin");
+    if (pin !== correctPin) return this.error("Odmowa dostępu");
     
     if (!participant_id) return this.error("Brakujące ID do nagrody");
 
