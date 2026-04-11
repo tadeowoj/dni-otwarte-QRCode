@@ -1,95 +1,37 @@
-# Instrukcje dla agenta
-
-Utrzymuj ten projekt w jak największym stopniu niezależny od konkretnego agenta.
-
-## Zasada: utrzymanie kontekstu
-
-Na koniec każdego istotnego zadania lub sesji podsumuj aktualny stan projektu, podjęte decyzje architektoniczne oraz listę oczekujących zadań („todo”) w pliku AGENTS.md. Zawsze upewnij się, że plik ten odzwierciedla rzeczywisty („ground truth”) stan projektu, aby kolejne sesje mogły być kontynuowane bez problemów. Użyj narzędzia writeFile, aby nadpisać plik i rozpocząć kolejną sesję z aktualnym stanem.
-
-## Zasada: commity
-
-* Zawsze używaj konwencjonalnych komunikatów commitów (np. `feat:`, `fix:`, `docs:`, `chore:`)
-* Nigdy nie dodawaj informacji o agentach (copilot, claude itp.) w komunikatach commitów ani w sekcji współautorów
-* Commitowanie bezpośrednio do gałęzi main jest dozwolone w tym repozytorium
-
-## Zasada: sekrety
-
-* Nigdy nie commituj sekretów, plików konfiguracyjnych ani plików baz danych
-
-## Zasada: styl kodu
-
-* W plikach markdown używaj akapitów w jednej linii — bez zawijania do wielu linii
-* Zawsze stosuj zapis tytułów w stylu zdaniowym (sentence case)
-* Nie używaj podkreśleń ani spacji w nazwach plików; stosuj myślniki
-* Skrypty wykonywalne nigdy nie powinny mieć rozszerzeń
-
-## Zasada: repozytoria GitHub
-
-* Włącz automatyczne usuwanie gałęzi po scaleniu PR
-* Po scaleniu PR pobierz najnowsze zmiany do bieżącej gałęzi i usuń pozostałe worktree
-
---
-# Projekt
-Cały projekt jest zdefiniowany w pliku PROJEKT.md
-
-# Dziennik projektu i stan architektury
-
-## Podsumowanie - Etap 1: Inicjalizacja Backend-u i Bazy Danych
-Zdecydowano o architekturze opartej na headless-API z użyciem Google Apps Script i pliku Google Sheets (`Stanowiska`, `Uczestnicy`, `Skanowania`, `Ustawienia`). 
-Stworzono repozytorium plików backendu. Aplikacja kliencka użyje go do pobierania/zapisywania uczestników i weryfikacji skanów kodów.
-
-### Decyzje Architektoniczne
-- Kod ułożony wg Modułów: `Code.js` (Router), `API.js` (Logika Biznesowa), `Database.js` (Wrapper GSheet).
-- Zainstalowano Node.js na stacji i użyto narzędzia `@google/clasp` w celu wygenerowania środowiska do spushowania bazy do Grive.
-
-## Podsumowanie - Etap 2: Aplikacja kliencka (Frontend)
-Zbudowano aplikację typu SPA (Single Page Application) ze strukturą Vite. Oskryptowanie bazuje na pliku `main.js`, w którym zaimplementowano komunikację Fetch z uprzednio wdrożonym API Google Apps Script. 
-
-### Decyzje wizualne i projektowe
-- Tło aplikacji jest zbudowane na Glassmorphismie (CSS Blur Backdrops).
-- Kolorystyka to motyw Dark Mode + neonowa zieleń do wskazywania postępu, oraz ciemny fiolet do tła i przycisków.
-- Stan klienta (Participant ID) jest zapisywany w `localStorage`, żeby uczeń wbiegając na salę nie musiał się co stół logować.
-
-## Podsumowanie - Etap 3: Panel Admina i Ostateczne Wdrożenie
-Stworzyliśmy wyizolowany podprojekt interfejsu (Admin Panel) wewnątrz Frontendu dla organizatorów, zabezpieczony hasłem administratora pobieranym z arkusza `Ustawienia`. Po stronie API (`Code.js`, `API.js`) wbudowano metody zwracające kompleksowe statystyki oraz pełną historię tabel uczestników do weryfikacji manualnej. Dodano na repozytorium GitHub skrypt typu Action (CI/CD) hostujący automatycznie aplikację.
-
-### Osiągnięcia Techniczne:
-- `admin.html` oraz `admin.js` stworzone w zgodzie ze stylem (Glassmorphism & Gridy). Moduł działa całkowicie niezależnie od ścieżki logowania standardowego uczestnika.
-- Skonfigurowano auto-deploy na gałęzi Main. Plik konfiguracyjny (vite + gh-pages + workflow) gotowy.
-
-### TODO (W pełni zakończony proces)
-Główny zakres `PROJEKT.md` został pomyślnie zrealizowany. Zabawa jest gotowa na przyjęcie uczniów.
-
-## Aktualizacja architektury - 2026-04-11
-- Frontend (Vite) został przełączony na build wielostronicowy: `index.html` i `admin.html` są jawnie ustawione jako wejścia w `frontend/vite.config.js` (`build.rollupOptions.input`).
-- Hosting GitHub Pages działa na custom domenie `qr.zsoiz-czyzew.pl`; panel administratora jest dostępny pod `/admin.html` po wdrożeniu artefaktu z obu stronami.
-- Backend Google Apps Script: frontend był podpięty do starego deploymentu Web App (`@1`), który nie zawierał akcji `get_admin_data`. Frontend został przepięty na aktualny deployment (`@HEAD`) zgodny z aktualnym routerem (`get_admin_data`, `issue_reward`).
-- Operacyjnie: kod backendu został wypchnięty przez `clasp push`, a następnie frontend został zdeployowany przez GitHub Actions na `main`.
-
-## TODO operacyjne
-- Przy każdej zmianie endpointu Apps Script aktualizować URL w `frontend/main.js` i `frontend/admin.js` w tej samej zmianie.
-- Po zmianach backendu Apps Script wykonywać `clasp push` oraz utrzymywać aktywny deployment Web App zgodny z frontendem.
-- Po każdej istotnej zmianie architektury aktualizować ten plik (`AGENT.md`) jako źródło prawdy.
-- Korekta operacyjna (2026-04-11): endpoint `@HEAD` Apps Script może wymagać autoryzacji i powodować błąd "Błąd połączenia z serwerem" w produkcji. Frontend ma używać wyłącznie publicznego deploymentu wersjonowanego (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`.
-- Korekta backendu (2026-04-11): walidacja PIN admina została znormalizowana (`String(...).trim()`), aby działała poprawnie niezależnie od typu w arkuszu (`number` vs `string`) i spacji.
-- Korekta backendu (2026-04-11): usunięto fallbacki i hardcoded PIN z kodu; autoryzacja admina opiera się wyłącznie na `admin_pin` z arkusza `Ustawienia`.
-- Stabilizacja auth admina (2026-04-11): porównanie PIN działa po normalizacji `String(...).trim()`, dzięki czemu działa dla wartości zapisanych jako liczba lub tekst.
-
-## Aktualizacja architektury - 2026-04-11 (unikalnosc rejestracji)
-- Rejestracja w backendzie (`backend/API.js`) waliduje duplikat po pelnym zestawie: `first_name_last_name + nickname + school_name`.
-- Porownanie duplikatu jest normalizowane (`trim`, redukcja wielokrotnych spacji dla imienia/szkoly, `toLowerCase`), dzieki czemu rozne wielkosci liter i nadmiarowe spacje nie omijaja blokady.
-- Endpoint `register` zwraca kod bledu `DUPLICATE_PARTICIPANT` przy probie utworzenia konta z tym samym zestawem danych.
-- Sekcja rejestracji jest zabezpieczona `LockService.getScriptLock()`, aby rownolegle zadania nie tworzyly duplikatow przy check+insert.
-- Frontend (`frontend/main.js`) obsluguje `DUPLICATE_PARTICIPANT` dedykowanym komunikatem i fokusuje pole nick.
-
-## TODO operacyjne
-- Po wdrozeniu backendu do Apps Script wykonac `clasp push`, a nastepnie zweryfikowac recznie 5 scenariuszy rejestracji (duplikat pelnego zestawu, inne szkoly, roznice liter/spacji, rownolegle submity, rozny nick).
-
-## Aktualizacja architektury - 2026-04-11 (przycisk wylogowania)
-- W dashboardzie uczestnika dodano mały przycisk `Wyloguj` w naglowku (`frontend/index.html`, `frontend/style.css`) jako wariant ghost.
-- Wylogowanie jest lokalne po stronie frontendu (`frontend/main.js`) i nie wymaga endpointu backendowego.
-- Klikniecie `Wyloguj` uruchamia potwierdzenie (`window.confirm`), a po akceptacji czyści `localStorage` (`qr_participant_id`, `qr_nickname`), resetuje stan sesji i przenosi do widoku rejestracji.
-
-## TODO operacyjne
-- Przy kolejnej publikacji frontendu wykonac `npm run build` i wdrozenie GitHub Pages, aby przycisk `Wyloguj` byl widoczny na produkcji.
-- Po wdrozeniu recznie sprawdzic scenariusze: anulowanie wylogowania, potwierdzenie wylogowania, odswiezenie strony po wylogowaniu.
+# Instrukcje dla agentów
+Projekt ma być utrzymywany tak, żeby kolejne sesje mogły wejść w temat bez zgadywania.
+## Zasady pracy
+- Po każdym istotnym zadaniu aktualizuj `AGENTS.md`: stan projektu, decyzje i otwarte TODO.
+- Używaj konwencjonalnych commitów (`feat:`, `fix:`, `docs:`, `chore:`).
+- Nie dodawaj w commitach informacji o agentach ani współautorach-agentach.
+- Commit na `main` jest dozwolony w tym repo.
+- Nigdy nie commituj sekretów, plików konfiguracyjnych z danymi wrażliwymi ani plików baz danych.
+## Zasady stylu
+- W Markdown trzymaj akapity w jednej linii (bez ręcznego zawijania).
+- Używaj nagłówków w stylu sentence case.
+- W nazwach plików używaj myślników, bez spacji i podkreśleń.
+- Skrypty wykonywalne nie powinny mieć rozszerzeń.
+## Zasady repozytorium GitHub
+- Włącz automatyczne usuwanie gałęzi po merge PR.
+- Po merge PR pobierz najnowsze zmiany i usuń zbędne worktree.
+# Kontekst projektu
+Całość wymagań funkcjonalnych jest opisana w `PROJEKT.md`.
+Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend Google Apps Script + Google Sheets (`Stanowiska`, `Uczestnicy`, `Skanowania`, `Ustawienia`).
+Backend jest podzielony modułowo: `Code.js` (router), `API.js` (logika), `Database.js` (warstwa arkusza).
+# Stan na 2026-04-11
+- Frontend działa jako build wielostronicowy (`index.html`, `admin.html`) i jest hostowany przez GitHub Pages (custom domain: `qr.zsoiz-czyzew.pl`).
+- Panel admina działa niezależnie od ścieżki uczestnika i korzysta z PIN z arkusza `Ustawienia`.
+- Walidacja PIN admina jest znormalizowana przez `String(...).trim()` i opiera się wyłącznie na `admin_pin` z arkusza.
+- Rejestracja ma blokadę duplikatów po zestawie `first_name_last_name + nickname + school_name` (normalizacja: `trim`, redukcja spacji, `toLowerCase`).
+- Endpoint `register` zwraca `DUPLICATE_PARTICIPANT`, a frontend obsługuje ten przypadek dedykowanym komunikatem.
+- Rejestracja jest zabezpieczona `LockService.getScriptLock()` przed równoległym duplikowaniem rekordów.
+- Dashboard uczestnika ma przycisk `Wyloguj`, który czyści lokalną sesję (`localStorage`) i wraca do rejestracji.
+- Kolorystyka frontendu została rozjaśniona do jasnego motywu szkolnego z fioletem jako głównym akcentem; zielony pozostał pomocniczy dla sukcesu/postępu.
+# Operacyjne zasady wdrożeniowe
+- Gdy zmieniasz endpoint Apps Script, aktualizuj URL równocześnie w `frontend/main.js` i `frontend/admin.js`.
+- Po zmianach backendu wykonuj `clasp push` i pilnuj zgodności aktywnego Web App deploymentu z frontendem.
+- Produkcyjny frontend ma używać publicznego deploymentu wersjonowanego Apps Script (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`, nie `@HEAD`.
+# Otwarte TODO
+- Po kolejnych zmianach backendu uruchomić ręczną walidację scenariuszy rejestracji (duplikaty, różnice wielkości liter/spacji, równoległe submitowanie).
+- Po zmianach frontendu wykonać `npm run build` i wdrożenie na GitHub Pages.
+- Po każdej istotnej zmianie aktualizować `AGENT.md` i `AGENTS.md`, żeby utrzymać jeden spójny kontekst dla następnych sesji.
