@@ -1,7 +1,7 @@
 // =========================================================================
 // KONFIGURACJA & ZMIENNE GLOBALNE
 // =========================================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbzzfHo60slLnqPG6ljFOJ10J8vy26AirEao8LjHoUOSQ2N6NR3D4FBUmjIhUHLHWw7h/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxNns-iiJ7s4mM_P5mIyjZgWiAfu4Z8BywFRosIoH4/exec";
 
 const STATE = {
   participantId: localStorage.getItem('qr_participant_id') || null,
