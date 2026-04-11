@@ -27,9 +27,15 @@
 
     <section id="view-register" class="view hidden">
       <div class="glass-card start-card">
-        <h1 class="title">Witaj w grze! 🚀</h1>
-        <p class="subtitle">Nowe konto? Super. Wpisz dane i po chwili ustawisz PIN jak szef.</p>
-
+        <div class="start-hero">
+          <div class="hero-logo-shell" aria-hidden="true">
+            <video class="hero-logo-video" autoplay loop muted playsinline preload="auto">
+              <source src="/img/logo.webm" type="video/webm">
+            </video>
+          </div>
+          <h1 class="title">Witaj w grze! 🚀</h1>
+          <p class="subtitle">Nowe konto? Super. Wpisz dane i po chwili ustawisz PIN jak szef.</p>
+        </div>
         <form id="register-form" class="form-layout auth-form auth-form-active">
           <div class="input-group">
             <label for="reg-name">Imie i nazwisko</label>
@@ -173,3 +179,5 @@
   <script type="module" src="./main.js"></script>
 </body>
 </html>
+
+
