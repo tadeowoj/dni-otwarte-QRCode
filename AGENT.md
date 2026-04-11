@@ -1,42 +1,55 @@
-# Instrukcje dla agentów
-Projekt ma być utrzymywany tak, żeby kolejne sesje mogły wejść w temat bez zgadywania.
+# Instrukcje dla agentow
+Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgadywania.
+
 ## Zasady pracy
-- Po każdym istotnym zadaniu aktualizuj `AGENTS.md`: stan projektu, decyzje i otwarte TODO.
-- Używaj konwencjonalnych commitów (`feat:`, `fix:`, `docs:`, `chore:`).
-- Nie dodawaj w commitach informacji o agentach ani współautorach-agentach.
+- Po kazdym istotnym zadaniu aktualizuj `AGENT.md`: stan projektu, decyzje i otwarte TODO.
+- Uzywaj konwencjonalnych commitow (`feat:`, `fix:`, `docs:`, `chore:`).
+- Nie dodawaj w commitach informacji o agentach ani wspolautorach-agentach.
 - Commit na `main` jest dozwolony w tym repo.
-- Nigdy nie commituj sekretów, plików konfiguracyjnych z danymi wrażliwymi ani plików baz danych.
+- Nigdy nie commituj sekretow, plikow konfiguracyjnych z danymi wrazliwymi ani plikow baz danych.
+
 ## Zasady stylu
-- W Markdown trzymaj akapity w jednej linii (bez ręcznego zawijania).
-- Używaj nagłówków w stylu sentence case.
-- W nazwach plików używaj myślników, bez spacji i podkreśleń.
-- Skrypty wykonywalne nie powinny mieć rozszerzeń.
+- W Markdown trzymaj akapity w jednej linii (bez recznego zawijania).
+- Uzywaj naglowkow w stylu sentence case.
+- W nazwach plikow uzywaj myslnikow, bez spacji i podkreslen.
+- Skrypty wykonywalne nie powinny miec rozszerzen.
+
 ## Zasady repozytorium GitHub
-- Włącz automatyczne usuwanie gałęzi po merge PR.
-- Po merge PR pobierz najnowsze zmiany i usuń zbędne worktree.
+- Wlacz automatyczne usuwanie galezi po merge PR.
+- Po merge PR pobierz najnowsze zmiany i usun zbedne worktree.
+
 # Kontekst projektu
-Całość wymagań funkcjonalnych jest opisana w `PROJEKT.md`.
+Calosc wymagan funkcjonalnych jest opisana w `PROJEKT.md`.
 Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend Google Apps Script + Google Sheets (`Stanowiska`, `Uczestnicy`, `Skanowania`, `Ustawienia`).
-Backend jest podzielony modułowo: `Code.js` (router), `API.js` (logika), `Database.js` (warstwa arkusza).
+Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Database.js` (warstwa arkusza).
+
 # Stan na 2026-04-11
-- Frontend działa jako build wielostronicowy (`index.html`, `admin.html`) i jest hostowany przez GitHub Pages (custom domain: `qr.zsoiz-czyzew.pl`).
-- Panel admina działa niezależnie od ścieżki uczestnika i korzysta z PIN z arkusza `Ustawienia`.
-- Walidacja PIN admina jest znormalizowana przez `String(...).trim()` i opiera się wyłącznie na `admin_pin` z arkusza.
-- Rejestracja ma blokadę duplikatów po zestawie `first_name_last_name + nickname + school_name` (normalizacja: `trim`, redukcja spacji, `toLowerCase`).
-- Endpoint `register` zwraca `DUPLICATE_PARTICIPANT`, a frontend obsługuje ten przypadek dedykowanym komunikatem.
-- Rejestracja jest zabezpieczona `LockService.getScriptLock()` przed równoległym duplikowaniem rekordów.
-- Dashboard uczestnika ma przycisk `Wyloguj`, który czyści lokalną sesję (`localStorage`) i wraca do rejestracji.
-- Kolorystyka frontendu została rozjaśniona do jasnego motywu szkolnego z fioletem jako głównym akcentem; zielony pozostał pomocniczy dla sukcesu/postępu.
+- Frontend dziala jako build wielostronicowy (`index.html`, `admin.html`) i jest hostowany przez GitHub Pages (custom domain: `qr.zsoiz-czyzew.pl`).
+- Panel admina dziala niezaleznie od sciezki uczestnika i korzysta z PIN z arkusza `Ustawienia` (`admin_pin`).
+- Rejestracja ma blokade duplikatow po zestawie `first_name_last_name + nickname + school_name` (normalizacja: `trim`, redukcja spacji, `toLowerCase`) i endpoint zwraca `DUPLICATE_PARTICIPANT`.
+- Rejestracja jest zabezpieczona `LockService.getScriptLock()` przed rownoleglym duplikowaniem rekordow.
+- Uczestnik ma przycisk `Wyloguj`, ktory czysci lokalna sesje (`localStorage`) i wraca do ekranu autoryzacji.
+- UI frontendu dziala na jasnej palecie szkolnej; tokeny kolorow sa zcentralizowane w `frontend/style.css` i wspolne dla widoku uczestnika oraz admina.
+- Logowanie uczestnika dziala przez `nickname + PIN` (PIN jako string, dokladnie 4 cyfry).
+- Po rejestracji wymagane jest ustawienie PIN w modalu; dopiero po sukcesie tworzy sie sesja i wejscie do dashboardu.
+- Backend ma nowe akcje `set_user_pin` i `login_user`; konto bez PIN zwraca `PIN_NOT_SET`.
+- Arkusz `Uczestnicy` wymaga kolumny `pin`.
+- Publiczny deployment Apps Script pod URL używanym przez frontend jest zaktualizowany do wersji `@7` (zawiera `set_user_pin` i `login_user`).
+
 # Ostatnia sesja (2026-04-11)
-- Zmieniono paletę UI na jaśniejszą i bardziej szkolną bez zmian logiki JS oraz API.
-- Tokeny kolorów zostały zebrane i ujednolicone w `frontend/style.css` (`:root`).
-- Dopasowano też style panelu admina w `frontend/admin.html` do tej samej palety.
-- Zmiany dotknęły tylko warstwę wizualną (`frontend/style.css`, `frontend/admin.html`).
-# Operacyjne zasady wdrożeniowe
-- Gdy zmieniasz endpoint Apps Script, aktualizuj URL równocześnie w `frontend/main.js` i `frontend/admin.js`.
-- Po zmianach backendu wykonuj `clasp push` i pilnuj zgodności aktywnego Web App deploymentu z frontendem.
-- Produkcyjny frontend ma używać publicznego deploymentu wersjonowanego Apps Script (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`, nie `@HEAD`.
+- Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
+- Dodano modal ustawiania PIN po udanej rejestracji z walidacja `^\d{4}$` i potwierdzeniem PIN.
+- Rozszerzono backend (`API.js`, `Code.js`) o akcje `set_user_pin` oraz `login_user` i kody bledow `INVALID_PIN_FORMAT`, `INVALID_CREDENTIALS`, `PIN_NOT_SET`.
+- Zaktualizowano dokumentacje schematu (`schema/database.md`) o pole `pin` w arkuszu `Uczestnicy`.
+
+# Operacyjne zasady wdrozeniowe
+- Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
+- Po zmianach backendu wykonuj `clasp push` i pilnuj zgodnosci aktywnego Web App deploymentu z frontendem.
+- Produkcyjny frontend ma uzywac publicznego deploymentu wersjonowanego Apps Script (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`, nie `@HEAD`.
+
 # Otwarte TODO
-- Po kolejnych zmianach backendu uruchomić ręczną walidację scenariuszy rejestracji (duplikaty, różnice wielkości liter/spacji, równoległe submitowanie).
-- Po zmianach frontendu wykonać `npm run build` i wdrożenie na GitHub Pages.
-- Po każdej istotnej zmianie aktualizować ten plik (`AGENT.md`) jako jedyne źródło kontekstu dla kolejnych sesji.
+- W arkuszu `Uczestnicy` dodac fizycznie kolumne `pin` w naglowkach (zgodnie z `schema/database.md`).
+- Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
+- Po zmianach backendu wykonac `clasp push` i sprawdzic publiczny deployment Apps Script.
+- Po zmianach frontendu wykonac `npm run build` i wdrozenie na GitHub Pages.
+- Po kazdej istotnej zmianie aktualizowac ten plik (`AGENT.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
