@@ -39,6 +39,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Backend waliduje `school_name` po whitelistcie 16 szkol i zwraca `INVALID_SCHOOL_NAME` dla wartosci spoza listy.
 - Widok rejestracji (`frontend/index.html`) ma sekcje hero z loopowanym filmem logo (`/img/logo.webm`) nad naglowkiem "Witaj w grze!".
 - Asset filmu logo jest dostepny przez Vite z `frontend/public/img/logo.webm` (kopiowany z repo `img/logo.webm`).
+- W hero rejestracji logo video zostalo zmniejszone i ustawione po prawej stronie naglowka "Witaj w grze!", z wysokoscia dopasowana do wysokosci naglowka.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -51,6 +52,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Zaktualizowano URL backendu Apps Script do deploymentu `@9` w `frontend/main.js` i `frontend/admin.js`.
 - Dodano w `frontend/index.html` sekcje hero z autoplay/loop/muted video (`/img/logo.webm`) i nowy styling (`frontend/style.css`) dla profesjonalnej ekspozycji logo.
 - Dodano publiczny asset `frontend/public/img/logo.webm` oraz potwierdzono lokalny build frontendu (`npm run build`) po zmianie.
+- Przestawiono layout hero: naglowek i logo sa w jednym rzedzie, a rozmiar video zostal doskalowany do wysokosci naglowka (desktop + mobile).
 
 # Operacyjne zasady wdrozeniowe
 - Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
