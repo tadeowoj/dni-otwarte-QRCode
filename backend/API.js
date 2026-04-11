@@ -2,6 +2,25 @@
  * API.js - Logika biznesowa i kontrolery (wg modulow projektu)
  */
 
+const ALLOWED_SCHOOL_NAMES = [
+  "Szkoła Podstawowa im. Szarych Szeregów w Czyżewie",
+  "Szkoła Podstawowa im. Ojca Świętego Jana Pawła II w Bogutach-Piankach",
+  "Szkoła Podstawowa w Tymiankach-Buciach",
+  "Szkoła Podstawowa im. Marii Konopnickiej w Nurze",
+  "Szkoła Podstawowa im. Kardynała Stefana Wyszyńskiego w Szulborzu Wielkim",
+  "Szkoła Podstawowa w Zarębach Kościelnych",
+  "Szkoła Podstawowa w Andrzejewie",
+  "Szkoła Podstawowa w Ołdakach-Polonii",
+  "Szkoła Podstawowa im. Św. Jana Pawła II w Rosochatym-Kościelnym",
+  "Szkoła Podstawowa w Dąbrowie Wielkiej",
+  "Szkoła Podstawowa im. Kardynała Stefana Wyszyńskiego w Szepietowie",
+  "Szkoła Podstawowa w Wojnach-Krupach",
+  "Szkoła Podstawowa im. Polskiej Organizacji Wojskowej w Dąbrówce Kościelnej",
+  "Szkoła Podstawowa im. Komisji Edukacji Narodowej w Klukowie",
+  "Szkoła Podstawowa w Wyszonkach Kościelnych",
+  "Szkoła Podstawowa w Łuniewie Małym"
+];
+
 const API = {
   // Zwraca odpowiedz w spojnym formacie
   success(data) {
@@ -37,6 +56,13 @@ const API = {
     return this.normalizeNickname(value).toLowerCase();
   },
 
+  getAllowedSchoolByComparableName(value) {
+    const comparableValue = this.normalizeComparableNameOrSchool(value);
+    return ALLOWED_SCHOOL_NAMES.find((school) => {
+      return this.normalizeComparableNameOrSchool(school) === comparableValue;
+    }) || null;
+  },
+
   isAdminPinValid(pin) {
     const enteredPin = this.normalizePin(pin);
     const configuredPin = this.normalizePin(DB.getSetting("admin_pin"));
@@ -60,9 +86,14 @@ const API = {
       return this.error("Wszystkie pola sa wymagane");
     }
 
+    const canonicalSchoolName = this.getAllowedSchoolByComparableName(school_name);
+    if (!canonicalSchoolName) {
+      return this.error("Nieprawidlowa szkola. Wybierz szkole z listy.", "INVALID_SCHOOL_NAME");
+    }
+
     const normalizedName = this.normalizeComparableNameOrSchool(first_name_last_name);
     const normalizedNickname = this.normalizeComparableNickname(nickname);
-    const normalizedSchool = this.normalizeComparableNameOrSchool(school_name);
+    const normalizedSchool = this.normalizeComparableNameOrSchool(canonicalSchoolName);
 
     // Blokada rownoleglych zapisow: check + insert musza byc atomowe.
     const lock = LockService.getScriptLock();
@@ -92,7 +123,7 @@ const API = {
         first_name_last_name: first_name_last_name,
         nickname: nickname,
         pin: "",
-        school_name: school_name,
+        school_name: canonicalSchoolName,
         created_at: new Date().toISOString(),
         codes_collected_count: 0,
         is_complete: false,

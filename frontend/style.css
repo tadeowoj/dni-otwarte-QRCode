@@ -5,6 +5,7 @@
     --clr-bg: #f5f7ff;
     --clr-text: #1f2937;
     --clr-text-muted: #64748b;
+    --clr-placeholder: #c3cedd;
     
     --clr-purple-light: #8b5cf6;
     --clr-purple-dark: #6d28d9;
@@ -147,7 +148,8 @@
   
   .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
   .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--clr-text-muted); }
-  .input-group input {
+  .input-group input,
+  .input-group select {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--clr-glass-border);
     border-radius: 8px;
@@ -157,10 +159,28 @@
     font-size: 1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .input-group input:focus {
+  .input-group input:focus,
+  .input-group select:focus {
     outline: none;
     border-color: var(--clr-purple-light);
     box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  }
+
+  .input-group input::placeholder {
+    color: var(--clr-placeholder);
+    opacity: 1;
+  }
+
+  #register-form #reg-school:invalid {
+    color: var(--clr-placeholder);
+  }
+
+  #register-form #reg-school option {
+    color: var(--clr-text);
+  }
+
+  #register-form #reg-school option[value=""] {
+    color: var(--clr-placeholder);
   }
   
   /* =========================================================================

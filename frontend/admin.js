@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzzfHo60slLnqPG6ljFOJ10J8vy26AirEao8LjHoUOSQ2N6NR3D4FBUmjIhUHLHWw7h/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
 
 let CURRENT_PIN = "";
 
