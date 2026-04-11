@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dni Otwarte - Gra QR</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="Aplikacja konkursowa - Zbierz wszystkie kody w trakcie dni otwartych!" />
+  
+  <!-- Fonty: Inter i połączone czcionki geometryczne -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- Animowane Tło (Glassmorphism blobs) -->
+  <div class="bg-blob blob-purple"></div>
+  <div class="bg-blob blob-neon-green"></div>
+
+  <!-- Główny Kontener Aplikacji -->
+  <main id="app-container">
+    
+    <!-- Notyfikacje (Toast) -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- SEKCJA Loader -->
+    <section id="view-loader" class="view active">
+       <div class="loader-spinner"></div>
+       <p class="loader-text">Ładowanie systemu...</p>
+    </section>
+
+    <!-- SEKCJA Rejestracja -->
+    <section id="view-register" class="view hidden">
+      <div class="glass-card start-card">
+        <h1 class="title">Witaj w grze! 🚀</h1>
+        <p class="subtitle">Odwiedzaj stanowiska, łap kody z plansz i zgarnij nagrodę niespodziankę na stoisku głównym!</p>
+        
+        <form id="register-form" class="form-layout">
+          <div class="input-group">
+            <label for="reg-name">Imię i Nazwisko</label>
+            <input type="text" id="reg-name" placeholder="np. Jan Kowalski" required>
+          </div>
+          
+          <div class="input-group">
+            <label for="reg-nick">Twój unikalny Nick</label>
+            <input type="text" id="reg-nick" placeholder="np. Janko99" required>
+          </div>
+          
+          <div class="input-group">
+            <label for="reg-school">Szkoła podstawowa</label>
+            <input type="text" id="reg-school" placeholder="np. SP nr 1 w Czyżewie" required>
+          </div>
+          
+          <button type="submit" id="btn-register" class="btn-primary">
+            <span>Dołącz do gry</span>
+            <!-- Simple SVG icon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- SEKCJA Dashboard (Panel użytkownika) -->
+    <section id="view-dashboard" class="view hidden">
+      
+      <!-- Nagłówek (Sticky) -->
+      <header class="glass-header">
+        <div class="header-profile">
+          <div class="avatar"><span id="avatar-letter">?</span></div>
+          <div class="user-info">
+            <h2 id="dash-nickname">Nick</h2>
+            <span id="dash-school" class="tag">Szkoła</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Sekcja postępu -->
+        <div class="glass-card highlight-card">
+          <div class="progress-info">
+            <h3>Twój postęp</h3>
+            <div class="progress-numbers"><strong id="dash-collected">0</strong> / <span id="dash-required">15</span></div>
+          </div>
+          <div class="progress-bar-container">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <p id="progress-message" class="progress-status-msg">Zbieraj kody dalej!</p>
+        </div>
+
+        <!-- Stanowiska Grid -->
+        <h3 class="section-title">Odwiedź stanowiska</h3>
+        <div id="stations-grid" class="stations-grid">
+           <!-- Dynamicznie wstrzykiwane kafelki z JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SEKCJA Skanowania Pomyślnego (Przejsciowa) -->
+    <section id="view-scan-result" class="view hidden center-content">
+      <div class="glass-card result-card">
+        <div id="scan-icon" class="status-icon success-icon">✨</div>
+        <h2 id="scan-title">Świetnie!</h2>
+        <p id="scan-message">Stanowisko zaliczone. Zdobywasz kolejny punkt!</p>
+        <button id="btn-back-dash" class="btn-primary mt-4">Wróć do Panelu</button>
+      </div>
+    </section>
+
+    <!-- SEKCJA Zwycięstwo (Komplet pointów) -->
+    <section id="view-complete" class="view hidden center-content">
+      <div class="glass-card complete-card pulse-glow">
+        <h1 class="title clr-neon">SZACUN! 🏅</h1>
+        <p class="subtitle">Wykonałeś zadanie. Odszukaj organizatorów na auli głównej i pokaż ten ekran aby odebrać upominek.</p>
+        
+        <div class="profile-badge">
+          <h2 id="comp-nickname">Zwycięzca</h2>
+          <p id="comp-school">SP...</p>
+        </div>
+        
+        <p class="mt-4 text-small">Pokaż to organizatorom przed wyjściem!</p>
+      </div>
+    </section>
+
+  </main>
+  
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

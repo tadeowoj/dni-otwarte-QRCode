@@ -1,0 +1,311 @@
+/* =========================================================================
+   ROZDZIAŁ 1: ZMIENNE CSS & NATIVE RESET
+   ========================================================================= */
+   :root {
+    --clr-bg: #0d0f1a;
+    --clr-text: #e2e8f0;
+    --clr-text-muted: #94a3b8;
+    
+    --clr-purple-light: #a855f7;
+    --clr-purple-dark: #7e22ce;
+    --clr-neon-green: #22c55e;
+    --clr-neon-glow: rgba(34, 197, 94, 0.4);
+    
+    --clr-danger: #ef4444;
+    --clr-warning: #f59e0b;
+  
+    --clr-glass: rgba(30, 41, 59, 0.6);
+    --clr-glass-border: rgba(255, 255, 255, 0.1);
+    
+    --br-base: 16px;
+    --br-round: 50%;
+  
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background-color: var(--clr-bg);
+    color: var(--clr-text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  /* =========================================================================
+     ROZDZIAŁ 2: ANIMOWANE TŁO (BLOBS)
+     ========================================================================= */
+  .bg-blob {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: var(--br-round);
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.5;
+    animation: floatBlob 10s infinite alternate ease-in-out;
+  }
+  
+  .blob-purple {
+    top: -50px;
+    left: -50px;
+    background: var(--clr-purple-dark);
+  }
+  
+  .blob-neon-green {
+    bottom: 100px;
+    right: -100px;
+    background: var(--clr-neon-green);
+    animation-delay: -5s;
+  }
+  
+  @keyframes floatBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, 40px) scale(1.1); }
+  }
+  
+  /* =========================================================================
+     ROZDZIAŁ 3: UKŁAD SPA & WIDOKI (VIEWS)
+     ========================================================================= */
+  #app-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .view {
+    display: none;
+    flex-direction: column;
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .view.active {
+    display: flex;
+  }
+  
+  .center-content {
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* =========================================================================
+     ROZDZIAŁ 4: GLASSMORPHISM COMPONENTS
+     ========================================================================= */
+  .glass-card {
+    background: var(--clr-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--clr-glass-border);
+    border-radius: var(--br-base);
+    padding: 24px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  .glass-header {
+    background: rgba(13, 15, 26, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: -20px -20px 20px -20px;
+    border-bottom: 1px solid var(--clr-glass-border);
+  }
+  
+  /* =========================================================================
+     ROZDZIAŁ 5: TYPOGRAFIA & FORMULARZE
+     ========================================================================= */
+  h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
+  .title { font-size: 2rem; margin-bottom: 0.5rem; }
+  .subtitle { color: var(--clr-text-muted); margin-bottom: 2rem; }
+  .section-title { margin: 2rem 0 1rem; font-size: 1.25rem; }
+  
+  .form-layout { display: flex; flex-direction: column; gap: 1rem; }
+  
+  .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .input-group label { font-size: 0.875rem; font-weight: 600; color: var(--clr-text-muted); }
+  .input-group input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--clr-purple-light);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+  }
+  
+  /* =========================================================================
+     ROZDZIAŁ 6: PRZYCISKI
+     ========================================================================= */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--clr-purple-light), var(--clr-purple-dark));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: var(--font-body);
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-icon { width: 20px; height: 20px; }
+  .mt-4 { margin-top: 1.5rem; }
+  
+  /* =========================================================================
+     ROZDZIAŁ 7: PANEL - HEADER & PASEK POSTĘPU
+     ========================================================================= */
+  .header-profile { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--br-round);
+    background: linear-gradient(135deg, var(--clr-neon-green), #059669);
+    display: flex; justify-content: center; align-items: center;
+    font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;
+    color: #111;
+  }
+  .tag {
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    color: var(--clr-text-muted);
+  }
+  
+  .highlight-card { border-color: rgba(34, 197, 94, 0.3); }
+  .progress-info { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1rem; }
+  .progress-numbers { font-family: var(--font-heading); font-size: 1.5rem; }
+  .progress-numbers strong { color: var(--clr-neon-green); font-size: 2rem; }
+  
+  .progress-bar-container {
+    height: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--clr-neon-green);
+    border-radius: 6px;
+    width: 0%; /* Inicjalnie 0, kontrolowane przez JS */
+    transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: 0 0 10px var(--clr-neon-glow);
+  }
+  .progress-status-msg { margin-top: 0.5rem; font-size: 0.875rem; color: var(--clr-text-muted); text-align: right; }
+  
+  /* =========================================================================
+     ROZDZIAŁ 8: GRID KAFELKÓW (STANOWISKA)
+     ========================================================================= */
+  .stations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  
+  .station-card {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center;
+    transition: transform 0.2s, background 0.2s, border-color 0.2s;
+  }
+  
+  .station-card.completed {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  .station-card.completed .card-icon {
+    background: var(--clr-neon-green);
+    color: #111;
+  }
+  
+  .station-card.disabled {
+    opacity: 0.5;
+    filter: grayscale(1);
+  }
+  
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--br-round);
+    background: rgba(255,255,255,0.05);
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.25rem;
+    transition: background 0.2s;
+  }
+  .card-title { font-size: 0.875rem; font-weight: 600; }
+  
+  /* =========================================================================
+     ROZDZIAŁ 9: POWIADOMIENIA TOAST & INNE
+     ========================================================================= */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%);
+    background: var(--clr-glass); backdrop-filter: blur(8px);
+    border: 1px solid var(--clr-glass-border);
+    color: #fff; padding: 12px 24px; border-radius: 30px;
+    font-size: 0.875rem; font-weight: 600; z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--clr-danger); }
+  
+  .loader-spinner {
+    width: 40px; height: 40px;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-top-color: var(--clr-purple-light);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .loader-text { text-align: center; color: var(--clr-text-muted); font-weight: 600; }
+  
+  /* Sukces Scan */
+  .status-icon {
+    width: 80px; height: 80px; font-size: 40px;
+    border-radius: 50%; background: rgba(34,197,94,0.1);
+    display: flex; justify-content: center; align-items: center; margin: 0 auto 1rem;
+  }
+  .success-icon { border: 2px solid var(--clr-neon-green); box-shadow: 0 0 20px var(--clr-neon-glow); }
+  .result-card, .complete-card { text-align: center; }
+  
+  .clr-neon { color: var(--clr-neon-green); text-shadow: 0 0 10px var(--clr-neon-glow); }
+  .pulse-glow { animation: pulsate 2s infinite alternate; border-color: rgba(34, 197, 94, 0.5); }
+  @keyframes pulsate { from { box-shadow: 0 0 10px rgba(34,197,94,0.1); } to { box-shadow: 0 0 30px rgba(34,197,94,0.4); } }
+  .profile-badge { background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 12px; margin-top: 2rem; border: 1px solid rgba(255,255,255,0.1); }
+  .text-small { font-size: 0.75rem; color: var(--clr-text-muted); }
