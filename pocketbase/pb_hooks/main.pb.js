@@ -490,7 +490,24 @@ routerAdd("POST", "/api/qr-action", (e) => {
     if (!participant) return error("Nie znaleziono uczestnika");
   
     const required_count = parseInt(getSetting(app, "required_codes_count"), 10) || 15;
-    return success({ participant: participantToObject(participant), required_codes_count: required_count });
+    const visited_station_codes = Array.from(new Set(
+      findRecordsByFilter(
+        app,
+        COLLECTIONS.scans,
+        "participant_id = {:participantId} && scan_result = 'ok'",
+        "",
+        2000,
+        0,
+        { participantId: participant_id }
+      )
+        .map((scan) => normalizeStationCode(scan.get("station_code")))
+        .filter(Boolean)
+    ));
+    return success({
+      participant: participantToObject(participant),
+      required_codes_count: required_count,
+      visited_station_codes
+    });
   }
   
   var getStations = function(app) {

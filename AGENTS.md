@@ -106,6 +106,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Etykieta live statystyki lidera w dashboardzie uczestnika zostala zmieniona na: `Uczestnik na prowadzeniu ma punktów:`.
 - Logika `collecting_participants_count` w `get_stats` zostala doprecyzowana: liczba uczestnikow z `reward_issued == false` oraz `is_complete == false`.
 - Zdiagnozowano przyczyne stalego `0` w UI: produkcyjny endpoint `get_stats` nie zwracal nowych pol (`leader_points`, `collecting_participants_count`), a frontend mial fallback do `0`; frontend zaktualizowano defensywnie, aby brak pola nie resetowal widoku.
+- Dashboard uczestnika ma teraz "dobajerzone" kafelki stanowisk: wieksze emoji (deterministycznie pseudo-randomowe, stale per `station_code`) i czytelniejsza nazwe stanowiska.
+- Odwiedzone stanowiska sa teraz wizualnie disabled (wyszarzone) po stronie uczestnika; frontend oznacza je na podstawie `visited_station_codes`.
+- Akcja `get_profile` zwraca dodatkowo `visited_station_codes` (unikalne `station_code` ze skanow `scan_result='ok'` dla danego uczestnika), bez breaking change dla dotychczasowych pol.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -147,6 +150,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test dashboardu uczestnika: czy live statystyki (`Uczestnik na prowadzeniu ma punktów:`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.
 - Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (poprawione `get_stats` z `leader_points` i `collecting_participants_count`) i zrestartowac instancje PocketBase.
 - Potwierdzic na produkcji przez `POST /api/qr-action` (`action=get_stats`), ze response zawiera pola `leader_points` oraz `collecting_participants_count`.
+- Wykonac reczny smoke test kafelkow stanowisk uczestnika: wieksze emoji sa stale per stanowisko, a zaliczone stanowiska przechodza w stan disabled (`Zaliczone`) po skanie.
 - Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.

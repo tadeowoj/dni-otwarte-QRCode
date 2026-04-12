@@ -7,6 +7,7 @@ const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 const TEACHER_PANEL_POLL_INTERVAL_MS = 1500;
 const PARTICIPANT_STATS_POLL_INTERVAL_MS = 5000;
+const STATION_EMOJI_POOL = ["🎯", "🚀", "🧠", "🛠️", "🔬", "🧩", "⚡", "🎨", "📚", "🏁", "🎮", "🛰️", "🌟", "🧪", "🧭", "🎬"];
 
 const queryParams = new URLSearchParams(window.location.search);
 
@@ -644,6 +645,7 @@ async function loadDashboard() {
 
   const participant = profileRes.data.participant;
   const required_codes_count = profileRes.data.required_codes_count;
+  const visited_station_codes = Array.isArray(profileRes.data.visited_station_codes) ? profileRes.data.visited_station_codes : [];
   STATE.stations = stationsRes.data && stationsRes.data.stations ? stationsRes.data.stations : [];
 
   if (participant.is_complete === true || participant.is_complete === "TRUE") {
@@ -651,10 +653,19 @@ async function loadDashboard() {
     return;
   }
 
-  renderDashboard(participant, required_codes_count);
+  renderDashboard(participant, required_codes_count, visited_station_codes);
 }
 
-function renderDashboard(participant, reqCount) {
+function pickStationEmoji(seedValue) {
+  const seed = String(seedValue == null ? "" : seedValue);
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = ((hash * 31) + seed.charCodeAt(i)) >>> 0;
+  }
+  return STATION_EMOJI_POOL[hash % STATION_EMOJI_POOL.length];
+}
+
+function renderDashboard(participant, reqCount, visitedStationCodes) {
   document.getElementById("dash-nickname").innerText = participant.nickname;
   document.getElementById("dash-school").innerText = participant.school_name;
   document.getElementById("avatar-letter").innerText = participant.nickname.charAt(0).toUpperCase();
@@ -670,16 +681,40 @@ function renderDashboard(participant, reqCount) {
 
   const grid = document.getElementById("stations-grid");
   grid.innerHTML = "";
+  const visitedSet = new Set((visitedStationCodes || []).map((code) => String(code || "").trim()).filter(Boolean));
 
   STATE.stations.forEach((st) => {
     if (st.is_active !== "TRUE" && st.is_active !== true) return;
+    const stationCode = String(st.station_code || "").trim();
+    const stationName = String(st.station_name || "Stanowisko");
+    const visited = Boolean(stationCode && visitedSet.has(stationCode));
+    const emoji = pickStationEmoji(stationCode || stationName);
 
     const el = document.createElement("div");
     el.className = "station-card";
-    el.innerHTML = `
-      <div class="card-icon">🎯</div>
-      <span class="card-title">${st.station_name}</span>
-    `;
+    if (visited) {
+      el.classList.add("disabled");
+    }
+    el.setAttribute("aria-disabled", visited ? "true" : "false");
+
+    const icon = document.createElement("div");
+    icon.className = "card-icon";
+    icon.innerText = emoji;
+
+    const title = document.createElement("span");
+    title.className = "card-title";
+    title.innerText = stationName;
+
+    el.appendChild(icon);
+    el.appendChild(title);
+
+    if (visited) {
+      const status = document.createElement("span");
+      status.className = "station-status";
+      status.innerText = "Zaliczone";
+      el.appendChild(status);
+    }
+
     grid.appendChild(el);
   });
 
