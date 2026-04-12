@@ -553,7 +553,18 @@ const API = {
     const stations = DB.getRowsAsObjects("Stanowiska");
     const scans = DB.getRowsAsObjects("Skanowania");
 
-    participants.reverse();
+    const getCodesCount = (participant) => {
+      const count = Number(participant.codes_collected_count);
+      return Number.isFinite(count) ? count : 0;
+    };
+    const getCreatedTime = (participant) => {
+      const timestamp = new Date(participant.created_at).getTime();
+      return Number.isFinite(timestamp) ? timestamp : 0;
+    };
+
+    participants.sort((a, b) => {
+      return getCodesCount(b) - getCodesCount(a) || getCreatedTime(b) - getCreatedTime(a);
+    });
 
     return this.success({
       participants,

@@ -61,6 +61,11 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Panel nauczyciela zostal uproszczony: widoczne sa tylko informacje o stanowisku, przycisk generowania i aktualny kod QR; usunieto link skanowania i liste ostatnich aktywnych kodow.
 - Lista szkol zostala przeniesiona do arkusza `Szkoly` (`school_name`, `is_active`, `display_order`); backend ma akcje `get_schools`, a frontend laduje dropdown szkol z API i blokuje rejestracje, jesli lista jest niedostepna.
 - Produkcyjny deployment Apps Script zostal przepiety na wersje `@14` (`Schools from sheet`); test POST `get_schools` zwrocil `status=success` i pusta liste, wiec arkusz `Szkoly` trzeba jeszcze fizycznie utworzyc/uzupelnic w Google Sheets.
+- Panel admina sortuje liste uczestnikow malejaco po `codes_collected_count`; remisy ida od najnowszego `created_at`, a puste lub bledne wartosci kodow licza sie jako `0`.
+- Naglowek tabeli admina zmieniono na `Dziennik Graczy (Najwiecej kodow)`.
+- Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
+- Wykonano `npx.cmd clasp push`, utworzono wersje Apps Script `@15` (`Admin participants ranking`) i przepieto produkcyjny deployment tym samym `deploymentId`.
+- Smoke test POST `get_admin_data` na produkcyjnym URL z testowym PIN zwrocil poprawny blad autoryzacji `Nieprawidlowy kod PIN administratora.`, wiec endpoint odpowiada po wdrozeniu `@15`; sortowanie realnej tabeli trzeba potwierdzic aktualnym PIN admina.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -96,7 +101,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
-- Sprawdzic publiczny deployment Apps Script po `clasp push` i opublikowac nowa wersje Web App (`@N`) pod produkcyjny URL.
+- Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
-- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@14`.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@15`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
