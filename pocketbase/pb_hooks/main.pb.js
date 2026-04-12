@@ -614,9 +614,15 @@ routerAdd("POST", "/api/qr-action", (e) => {
     const participants = findRecordsByFilter(app, COLLECTIONS.participants, "", "", 1000, 0);
     const stations = findRecordsByFilter(app, COLLECTIONS.stations, "", "", 500, 0);
     const scans = findRecordsByFilter(app, COLLECTIONS.scans, "", "", 2000, 0);
+    const leaderPoints = participants.reduce((max, participant) => {
+      const points = Number(participant.get("codes_collected_count")) || 0;
+      return points > max ? points : max;
+    }, 0);
   
     return success({
       participants_count: participants.length,
+      collecting_participants_count: participants.length,
+      leader_points: leaderPoints,
       completed_count: participants.filter((p) => isTruthy(p.get("is_complete"))).length,
       total_scans: scans.length,
       active_stations: stations.filter((s) => isTruthy(s.get("is_active"))).length

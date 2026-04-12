@@ -6,6 +6,7 @@
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 const TEACHER_PANEL_POLL_INTERVAL_MS = 1500;
+const PARTICIPANT_STATS_POLL_INTERVAL_MS = 5000;
 
 const queryParams = new URLSearchParams(window.location.search);
 
@@ -23,7 +24,10 @@ const STATE = {
   schoolsLoaded: false,
   teacherCodes: [],
   teacherPollTimer: null,
-  teacherPollInFlight: false
+  teacherPollInFlight: false,
+  participantStatsPollTimer: null,
+  participantStatsPollInFlight: false,
+  participantStats: null
 };
 
 // =========================================================================
@@ -51,6 +55,7 @@ function hideAllViews() {
 
 function showView(viewName) {
   if (viewName !== "teacher") stopTeacherPanelPolling();
+  if (viewName !== "dashboard") stopParticipantStatsPolling();
   hideAllViews();
   if (views[viewName]) {
     views[viewName].classList.remove("hidden");
@@ -188,6 +193,7 @@ async function logoutUser() {
   if (!confirmLogout) return;
 
   stopTeacherPanelPolling();
+  stopParticipantStatsPolling();
   clearSessionStorage();
   STATE.userId = null;
   STATE.userRole = null;
@@ -196,6 +202,7 @@ async function logoutUser() {
   STATE.teacherStationCode = null;
   STATE.teacherStationName = null;
   STATE.pendingScanToken = null;
+  STATE.participantStats = null;
 
   showRegisterForm();
   const schoolsLoaded = await loadRegistrationSchools();
@@ -500,6 +507,51 @@ function stopTeacherPanelPolling() {
   STATE.teacherPollInFlight = false;
 }
 
+function renderParticipantStats(statsData) {
+  const leaderPoints = Number(statsData && statsData.leader_points) || 0;
+  const collectingParticipants = Number(statsData && statsData.collecting_participants_count) || 0;
+
+  document.getElementById("dash-leader-points").innerText = String(leaderPoints);
+  document.getElementById("dash-collecting-participants").innerText = String(collectingParticipants);
+}
+
+async function refreshParticipantStatsSilently() {
+  if (
+    STATE.participantStatsPollInFlight ||
+    STATE.userRole !== "participant" ||
+    !views.dashboard.classList.contains("active")
+  ) {
+    return;
+  }
+
+  STATE.participantStatsPollInFlight = true;
+  try {
+    const response = await fetchAPI("get_stats", {});
+    if (response.status === "success" && STATE.userRole === "participant" && views.dashboard.classList.contains("active")) {
+      const statsData = response.data || {};
+      STATE.participantStats = {
+        leader_points: Number(statsData.leader_points) || 0,
+        collecting_participants_count: Number(statsData.collecting_participants_count) || 0
+      };
+      renderParticipantStats(STATE.participantStats);
+    }
+  } finally {
+    STATE.participantStatsPollInFlight = false;
+  }
+}
+
+function startParticipantStatsPolling() {
+  stopParticipantStatsPolling();
+  STATE.participantStatsPollTimer = window.setInterval(refreshParticipantStatsSilently, PARTICIPANT_STATS_POLL_INTERVAL_MS);
+}
+
+function stopParticipantStatsPolling() {
+  if (!STATE.participantStatsPollTimer) return;
+  window.clearInterval(STATE.participantStatsPollTimer);
+  STATE.participantStatsPollTimer = null;
+  STATE.participantStatsPollInFlight = false;
+}
+
 async function loadTeacherPanel() {
   showView("loader");
 
@@ -616,7 +668,13 @@ function renderDashboard(participant, reqCount) {
     grid.appendChild(el);
   });
 
+  if (STATE.participantStats) {
+    renderParticipantStats(STATE.participantStats);
+  }
+
   showView("dashboard");
+  refreshParticipantStatsSilently();
+  startParticipantStatsPolling();
 }
 
 // =========================================================================

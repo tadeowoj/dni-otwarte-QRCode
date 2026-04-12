@@ -367,6 +367,41 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     box-shadow: 0 0 10px var(--clr-neon-glow);
   }
   .progress-status-msg { margin-top: 0.5rem; font-size: 0.875rem; color: var(--clr-text-muted); text-align: right; }
+
+  .dashboard-live-stats {
+    margin-top: 0.9rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .dashboard-live-stat {
+    background: rgba(255, 255, 255, 0.68);
+    border: 1px solid var(--clr-glass-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .dashboard-live-stat-label {
+    font-size: 0.72rem;
+    color: var(--clr-text-muted);
+  }
+
+  .dashboard-live-stat-value {
+    font-size: 1.2rem;
+    font-family: var(--font-heading);
+    color: var(--clr-purple-dark);
+    line-height: 1.1;
+  }
+
+  @media (max-width: 520px) {
+    .dashboard-live-stats {
+      grid-template-columns: 1fr;
+    }
+  }
   
   /* =========================================================================
      ROZDZIAŁ 8: GRID KAFELKÓW (STANOWISKA)

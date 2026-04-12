@@ -100,6 +100,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Akcja `get_lottery_data` zwraca teraz dodatkowo `participant_id` finalistow (bez breaking change dla istniejacego frontendu).
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`; plik `pocketbase/pb_hooks/main.pb.js` przechodzi lokalny parse check.
 - Klikniecie przycisku `Rozdaj fanty!` odtwarza teraz dzwiek `/losowanko.mp3` (asset z `frontend/public/losowanko.mp3`) przy kazdej rundzie losowania, jednokrotnie i bez petli.
+- Dashboard uczestnika (po zalogowaniu) ma nowy blok live statystyk pod paskiem postepu: `Punkty lidera` i `Uczestnicy w grze`.
+- Frontend `frontend/main.js` odswieza statystyki uczestnika przez akcje `get_stats` co 5 sekund tylko podczas aktywnego widoku `dashboard`; polling zatrzymuje sie po wyjsciu z dashboardu i przy wylogowaniu.
+- Backend `get_stats` w `pocketbase/pb_hooks/main.pb.js` zwraca dodatkowo `leader_points` (max `codes_collected_count`) i `collecting_participants_count` (wszyscy zarejestrowani uczestnicy), bez usuwania starych pol.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -138,6 +141,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
+- Wykonac reczny smoke test dashboardu uczestnika: czy nowe live statystyki (`Punkty lidera`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.
 - Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
