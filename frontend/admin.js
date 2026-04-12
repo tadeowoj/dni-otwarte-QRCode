@@ -1,6 +1,8 @@
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
+const DRAW_STORAGE_KEY = "qr_admin_draw_participants";
 
 let CURRENT_PIN = "";
+const DRAW_PARTICIPANTS = new Map(loadDrawParticipants());
 
 const views = {
   login: document.getElementById('view-login'),
@@ -17,6 +19,100 @@ function showToast(message, isError = false) {
   toast.innerText = message;
   toast.className = `toast show ${isError ? 'error' : ''}`;
   setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+function loadDrawParticipants() {
+  try {
+    const storedValue = localStorage.getItem(DRAW_STORAGE_KEY);
+    if (!storedValue) return [];
+    const parsed = JSON.parse(storedValue);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && item.participant_id)
+      .map((item) => [String(item.participant_id), item]);
+  } catch (err) {
+    return [];
+  }
+}
+
+function saveDrawParticipants() {
+  localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(Array.from(DRAW_PARTICIPANTS.values())));
+}
+
+function createDrawParticipantSnapshot(participant) {
+  return {
+    participant_id: participant.participant_id,
+    nickname: participant.nickname || "",
+    first_name_last_name: participant.first_name_last_name || "",
+    school_name: participant.school_name || "",
+    codes_collected_count: participant.codes_collected_count || 0
+  };
+}
+
+function syncDrawParticipants(participants) {
+  const currentIds = new Set(participants.map((participant) => String(participant.participant_id)));
+
+  Array.from(DRAW_PARTICIPANTS.keys()).forEach((participantId) => {
+    if (!currentIds.has(participantId)) {
+      DRAW_PARTICIPANTS.delete(participantId);
+    }
+  });
+
+  participants.forEach((participant) => {
+    const participantId = String(participant.participant_id);
+    if (DRAW_PARTICIPANTS.has(participantId)) {
+      DRAW_PARTICIPANTS.set(participantId, createDrawParticipantSnapshot(participant));
+    }
+  });
+
+  saveDrawParticipants();
+}
+
+function renderDrawParticipants() {
+  const list = document.getElementById("draw-list");
+  if (!list) return;
+
+  const participants = Array.from(DRAW_PARTICIPANTS.values());
+  if (participants.length === 0) {
+    list.innerHTML = '<p class="draw-list-empty">Brak graczy na liście losowania.</p>';
+    return;
+  }
+
+  list.innerHTML = participants.map((participant) => `
+    <div class="draw-player-row" data-id="${participant.participant_id}">
+      <div class="draw-player-main">
+        <strong>${participant.nickname}</strong>
+        <small>${participant.first_name_last_name}</small>
+        <div class="draw-player-meta">${participant.school_name} · Kody: ${participant.codes_collected_count || 0}</div>
+      </div>
+      <button type="button" class="btn-small draw-remove-cmd" data-id="${participant.participant_id}">Usuń</button>
+    </div>
+  `).join("");
+
+  document.querySelectorAll(".draw-remove-cmd").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const participantId = btn.getAttribute("data-id");
+      DRAW_PARTICIPANTS.delete(participantId);
+      saveDrawParticipants();
+      renderDrawParticipants();
+
+      const checkbox = document.querySelector(`.draw-checkbox[data-id="${participantId}"]`);
+      if (checkbox) checkbox.checked = false;
+    });
+  });
+}
+
+function setDrawParticipant(participant, selected) {
+  const participantId = String(participant.participant_id);
+
+  if (selected) {
+    DRAW_PARTICIPANTS.set(participantId, createDrawParticipantSnapshot(participant));
+  } else {
+    DRAW_PARTICIPANTS.delete(participantId);
+  }
+
+  saveDrawParticipants();
+  renderDrawParticipants();
 }
 
 async function fetchAPI(action, payload) {
@@ -81,6 +177,7 @@ function renderData(data) {
   // Tabela
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
+  syncDrawParticipants(data.participants);
 
   data.participants.forEach(p => {
     const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
@@ -102,6 +199,7 @@ function renderData(data) {
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td class="draw-check-cell"><input type="checkbox" class="draw-checkbox" data-id="${p.participant_id}" aria-label="Dodaj gracza ${p.nickname} do losowania" ${DRAW_PARTICIPANTS.has(String(p.participant_id)) ? "checked" : ""}></td>
       <td><strong>${p.nickname}</strong><br><small style="color:var(--clr-text-muted)">${p.first_name_last_name}</small></td>
       <td>${p.school_name}</td>
       <td>${p.codes_collected_count}</td>
@@ -113,6 +211,17 @@ function renderData(data) {
   });
 
   // Dodajemy event listenery delegegowanie dla renderowanych buttonów
+  document.querySelectorAll('.draw-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const participantId = this.getAttribute('data-id');
+      const participant = data.participants.find((item) => String(item.participant_id) === String(participantId));
+      if (!participant) return;
+      setDrawParticipant(participant, this.checked);
+    });
+  });
+
+  renderDrawParticipants();
+
   document.querySelectorAll('.issue-cmd').forEach(btn => {
     btn.addEventListener('click', async function() {
        const pid = this.getAttribute('data-id');

@@ -28,6 +28,15 @@
     .btn-small { padding: 6px 12px; font-size: 0.75rem; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35); color: var(--clr-text); border-radius: 8px; cursor: pointer; }
     .btn-small:hover, .btn-small:focus-visible { background: rgba(139, 92, 246, 0.2); border-color: var(--clr-purple-dark); }
     .btn-small:disabled { background: rgba(148, 163, 184, 0.2); border-color: rgba(148, 163, 184, 0.35); color: var(--clr-text-muted); cursor: not-allowed; }
+    .draw-check-cell { width: 48px; text-align: center; }
+    .draw-checkbox { width: 18px; height: 18px; accent-color: var(--clr-purple-dark); cursor: pointer; }
+    .draw-list { display: grid; gap: 10px; }
+    .draw-list-empty { color: var(--clr-text-muted); font-size: 0.9rem; }
+    .draw-player-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(255,255,255,0.72); border: 1px solid var(--clr-glass-border); border-radius: 8px; }
+    .draw-player-main { min-width: 0; }
+    .draw-player-main strong { display: block; }
+    .draw-player-main small { display: block; color: var(--clr-text-muted); margin-top: 2px; }
+    .draw-player-meta { color: var(--clr-text-muted); font-size: 0.78rem; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -85,6 +94,7 @@
           <table>
             <thead>
               <tr>
+                <th class="draw-check-cell">Los</th>
                 <th>Gracz</th>
                 <th>Szkoła</th>
                 <th>Kody</th>
@@ -97,6 +107,13 @@
               <!-- JS render -->
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="glass-card" style="margin-bottom:20px;">
+        <h3 class="section-title" style="margin-top:0;">Gracze biorący udział w losowaniu</h3>
+        <div id="draw-list" class="draw-list">
+          <p class="draw-list-empty">Brak graczy na liście losowania.</p>
         </div>
       </div>
     </section>
