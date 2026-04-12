@@ -180,9 +180,18 @@ function renderData(data) {
 
     // Przycisk "Wydaj Nagrodę" aktywny tylko gdy gracz ma Komplet, a nagroda NIE jest wydana
     const canIssue = (isComplete && !isIssued);
+    
+    const deleteBtn = `<button class="btn-small btn-danger delete-cmd" data-id="${p.participant_id}" title="Usuń uczestnika" style="padding: 6px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+    </button>`;
+
     const actionBtn = canIssue
-      ? `<button class="btn-small issue-cmd" data-id="${p.participant_id}">Wydaj Nagrodę</button>`
-      : `<button class="btn-small" disabled>Brak Akcji</button>`;
+      ? `<button class="btn-small issue-cmd" data-id="${p.participant_id}" style="margin-right: 4px; vertical-align: middle;">Wydaj Nagrodę</button>${deleteBtn}`
+      : deleteBtn;
+
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -220,12 +229,36 @@ function renderData(data) {
        if (res.status === "success") {
           showToast(res.message);
           document.getElementById(`reward-cell-${pid}`).innerHTML = `<span class="badge badge-success">Tak</span>`;
-          document.getElementById(`action-cell-${pid}`).innerHTML = `<button class="btn-small" disabled>Brak Akcji</button>`;
+          this.remove();
        } else {
           showToast(res.message, true);
           this.innerText = "Wydaj Nagrodę";
           this.disabled = false;
        }
+    });
+  });
+
+  document.querySelectorAll('.delete-cmd').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const pid = this.getAttribute('data-id');
+      if (!confirm("Czy na pewno chcesz usunąć tego uczestnika? Ta operacja usunie również jego wszystkie skany i jest nieodwracalna.")) {
+        return;
+      }
+      
+      const originalHtml = this.innerHTML;
+      this.innerText = "...";
+      this.disabled = true;
+
+      const res = await fetchAPI("delete_participant", { pin: CURRENT_PIN, participant_id: pid });
+      
+      if (res.status === "success") {
+        showToast("Uczestnik został usunięty.");
+        document.getElementById('btn-refresh').click(); // Odśwież widok po usunięciu
+      } else {
+        showToast(res.message, true);
+        this.innerHTML = originalHtml;
+        this.disabled = false;
+      }
     });
   });
 }

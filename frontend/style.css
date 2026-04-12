@@ -265,6 +265,20 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
 .btn-icon { width: 20px; height: 20px; }
 .mt-4 { margin-top: 1.5rem; }
 
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--clr-danger);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-danger:hover,
+.btn-danger:focus-visible {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: var(--clr-danger);
+}
+
 .btn-ghost {
   background: rgba(139, 92, 246, 0.08);
   color: var(--clr-text);
