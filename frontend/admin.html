@@ -28,6 +28,9 @@
     .btn-small { padding: 6px 12px; font-size: 0.75rem; background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35); color: var(--clr-text); border-radius: 8px; cursor: pointer; }
     .btn-small:hover, .btn-small:focus-visible { background: rgba(139, 92, 246, 0.2); border-color: var(--clr-purple-dark); }
     .btn-small:disabled { background: rgba(148, 163, 184, 0.2); border-color: rgba(148, 163, 184, 0.35); color: var(--clr-text-muted); cursor: not-allowed; }
+    .btn-logout { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.35); color: #dc2626; }
+    .btn-logout:hover, .btn-logout:focus-visible { background: rgba(239, 68, 68, 0.22); border-color: #dc2626; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
     .draw-check-cell { width: 48px; text-align: center; }
     .draw-checkbox { width: 18px; height: 18px; accent-color: var(--clr-purple-dark); cursor: pointer; }
     .draw-list { display: grid; gap: 10px; }
@@ -66,7 +69,10 @@
     <section id="view-admin" class="view hidden">
       <header class="glass-header" style="display:flex; justify-content:space-between; align-items:center;">
         <h2>Nadzór - Dni Otwarte</h2>
-        <button id="btn-refresh" class="btn-small">Odśwież dane</button>
+        <div class="header-actions">
+          <button id="btn-refresh" class="btn-small">Odśwież dane</button>
+          <button id="btn-logout" class="btn-small btn-logout">Wyloguj</button>
+        </div>
       </header>
       
       <div class="stat-cards">

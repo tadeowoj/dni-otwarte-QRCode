@@ -73,6 +73,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Frontend `frontend/main.js` i `frontend/admin.js` zostal przepiety na `https://pocketbase.zsoiz-czyzew.pl/api/qr-action` i wysyla teraz normalny `Content-Type: application/json`.
 - `schema/database.md` i `DEPLOYMENT.md` zostaly przepisane pod PocketBase/SQLite.
 - Panel admina ma lokalna liste `Gracze bioracy udzial w losowaniu`: checkbox w tabeli `Dziennik Graczy` dodaje/usuwa uczestnika, lista jest zapisywana w `localStorage` pod kluczem `qr_admin_draw_participants` i nie wymaga zmian w PocketBase.
+- Panel admina ma trwala sesje: PIN jest zapisywany w `localStorage` pod kluczem `qr_admin_session_pin` i przywracany po odswiezeniu strony; przycisk `Wyloguj` czysci sesje i wraca do ekranu logowania.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.

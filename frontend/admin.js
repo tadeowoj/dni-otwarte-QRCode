@@ -1,8 +1,21 @@
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const DRAW_STORAGE_KEY = "qr_admin_draw_participants";
+const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 
 let CURRENT_PIN = "";
 const DRAW_PARTICIPANTS = new Map(loadDrawParticipants());
+
+function saveSession(pin) {
+  localStorage.setItem(SESSION_STORAGE_KEY, pin);
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+}
+
+function getSavedSession() {
+  return localStorage.getItem(SESSION_STORAGE_KEY) || "";
+}
 
 const views = {
   login: document.getElementById('view-login'),
@@ -148,6 +161,7 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
   }
 
   CURRENT_PIN = pin;
+  saveSession(pin);
   renderData(res.data);
   showView('admin');
   showToast("Zalogowano pomyślnie!");
@@ -242,3 +256,27 @@ function renderData(data) {
     });
   });
 }
+
+// --- Logout ---
+document.getElementById('btn-logout').addEventListener('click', () => {
+  CURRENT_PIN = "";
+  clearSession();
+  showView('login');
+  document.getElementById('admin-pin').value = '';
+  showToast('Wylogowano.');
+});
+
+// --- Auto-login from saved session ---
+(async function restoreSession() {
+  const savedPin = getSavedSession();
+  if (!savedPin) return;
+
+  const res = await fetchAPI("get_admin_data", { pin: savedPin });
+  if (res.status === "success") {
+    CURRENT_PIN = savedPin;
+    renderData(res.data);
+    showView('admin');
+  } else {
+    clearSession();
+  }
+})();
