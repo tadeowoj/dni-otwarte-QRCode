@@ -369,42 +369,16 @@ async function renderTeacherQr(url) {
   });
 }
 
-function renderTeacherHistory(codes) {
-  const list = document.getElementById("teacher-qr-history");
-  list.innerHTML = "";
-
-  if (!codes || codes.length === 0) {
-    list.innerHTML = '<li class="teacher-qr-history-item">Brak aktywnych kodow. Wygeneruj pierwszy QR.</li>';
-    return;
-  }
-
-  codes.forEach((item) => {
-    const li = document.createElement("li");
-    li.className = "teacher-qr-history-item";
-    li.innerHTML = `
-      <div><strong>Token:</strong> ${item.qr_token}</div>
-      <div><strong>Utworzono:</strong> ${new Date(item.created_at).toLocaleString()}</div>
-      <div><a href="${item.scan_url}" target="_blank" rel="noopener noreferrer">${item.scan_url}</a></div>
-    `;
-    list.appendChild(li);
-  });
-}
-
 async function renderTeacherCurrentQr(code) {
   const qrPreview = document.querySelector(".teacher-qr-preview");
-  const qrLink = document.getElementById("teacher-qr-link");
 
   if (!code) {
     qrPreview.classList.add("is-empty");
-    qrLink.href = "#";
-    qrLink.innerText = "-";
     await renderTeacherQr(null);
     return;
   }
 
   qrPreview.classList.remove("is-empty");
-  qrLink.href = code.scan_url;
-  qrLink.innerText = code.scan_url;
   await renderTeacherQr(code.scan_url);
 }
 
@@ -434,7 +408,6 @@ async function applyTeacherPanelData(data, options = {}) {
 
   if (previousActiveToken !== currentActiveToken || options.forceRender) {
     await renderTeacherCurrentQr(codes[0] || null);
-    renderTeacherHistory(codes);
   }
 
   updateTeacherQrButton();

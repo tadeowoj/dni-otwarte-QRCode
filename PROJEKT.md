@@ -792,3 +792,4 @@ Następny krok mogę zrobić jako:
 - Nauczyciel moze miec tylko jeden aktywny kod QR naraz; ponowne generowanie przy aktywnym kodzie zwraca istniejacy token zamiast tworzyc kolejny.
 - Panel nauczyciela blokuje przycisk generowania, gdy kod jest aktywny, i odpyta backend co 2 sekundy, zeby ukryc QR bez przeladowania po skutecznym skanie uczestnika.
 - Backend przy skanowaniu akceptuje tylko aktualny aktywny token nauczyciela; starsze nadmiarowe aktywne tokeny nie przyznaja punktu.
+- Widok panelu nauczyciela pokazuje tylko dane stanowiska, przycisk generowania i aktualny kod QR; link skanowania oraz historia aktywnych kodow zostaly usuniete z UI.

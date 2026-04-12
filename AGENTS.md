@@ -58,6 +58,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Test POST `scan_code` z testowymi danymi na produkcyjnym URL zwrocil poprawny blad domenowy `Uczestnik nie istnieje, zaloguj sie ponownie.`, czyli router produkcyjny przyjmuje akcje po wdrozeniu `@12`.
 - Flow QR nauczyciela zostal doprecyzowany: tylko jeden aktywny kod QR na nauczyciela, `generate_teacher_qr` zwraca istniejacy aktywny kod zamiast tworzyc kolejny, panel blokuje przycisk generowania i odpytuje backend co 2 sekundy, zeby ukryc zuzyty kod bez reloadu.
 - Produkcyjny deployment Apps Script zostal przepiety na wersje `@13` (`Single active teacher QR`); test POST `get_teacher_panel_data` z `teacher_id=TEST` zwrocil poprawny blad domenowy `Nie znaleziono konta nauczyciela.`.
+- Panel nauczyciela zostal uproszczony: widoczne sa tylko informacje o stanowisku, przycisk generowania i aktualny kod QR; usunieto link skanowania i liste ostatnich aktywnych kodow.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.

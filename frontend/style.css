@@ -485,31 +485,6 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     border: 1px solid rgba(148, 163, 184, 0.4);
   }
 
-  .teacher-qr-link {
-    color: var(--clr-purple-dark);
-    word-break: break-all;
-    font-size: 0.85rem;
-  }
-
-  .teacher-history {
-    margin-top: 0.5rem;
-  }
-
-  .teacher-qr-history-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .teacher-qr-history-item {
-    border: 1px solid var(--clr-glass-border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.65);
-    font-size: 0.85rem;
-  }
-
   /* =========================================================================
      ROZDZIAL 10: EKRAN AUTORYZACJI
      ========================================================================= */
