@@ -109,6 +109,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Dashboard uczestnika ma teraz "dobajerzone" kafelki stanowisk: wieksze emoji (deterministycznie pseudo-randomowe, stale per `station_code`) i czytelniejsza nazwe stanowiska.
 - Odwiedzone stanowiska sa teraz wizualnie disabled (wyszarzone) po stronie uczestnika; frontend oznacza je na podstawie `visited_station_codes`.
 - Akcja `get_profile` zwraca dodatkowo `visited_station_codes` (unikalne `station_code` ze skanow `scan_result='ok'` dla danego uczestnika), bez breaking change dla dotychczasowych pol.
+- Dodano frontendowy fallback dla stanu visited: po udanym `scan_code` uczestnika `station_code` jest zapisywany lokalnie (`localStorage` klucz `qr_participant_visited_station_codes`) i laczony z danymi `get_profile`, dzieki czemu kafelek moze wyszarzyc sie od razu nawet gdy produkcyjny backend chwilowo nie zwraca `visited_station_codes`.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -151,6 +152,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (poprawione `get_stats` z `leader_points` i `collecting_participants_count`) i zrestartowac instancje PocketBase.
 - Potwierdzic na produkcji przez `POST /api/qr-action` (`action=get_stats`), ze response zawiera pola `leader_points` oraz `collecting_participants_count`.
 - Wykonac reczny smoke test kafelkow stanowisk uczestnika: wieksze emoji sa stale per stanowisko, a zaliczone stanowiska przechodza w stan disabled (`Zaliczone`) po skanie.
+- Potwierdzic recznie fallback visited: po skanie kafelek stanowiska zmienia sie na disabled od razu po powrocie do dashboardu, nawet przy chwilowym braku pola `visited_station_codes` w odpowiedzi `get_profile`.
 - Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.

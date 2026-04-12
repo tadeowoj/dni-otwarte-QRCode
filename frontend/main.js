@@ -8,6 +8,7 @@ const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 const TEACHER_PANEL_POLL_INTERVAL_MS = 1500;
 const PARTICIPANT_STATS_POLL_INTERVAL_MS = 5000;
 const STATION_EMOJI_POOL = ["🎯", "🚀", "🧠", "🛠️", "🔬", "🧩", "⚡", "🎨", "📚", "🏁", "🎮", "🛰️", "🌟", "🧪", "🧭", "🎬"];
+const PARTICIPANT_VISITED_STATIONS_STORAGE_KEY = "qr_participant_visited_station_codes";
 
 const queryParams = new URLSearchParams(window.location.search);
 
@@ -28,7 +29,8 @@ const STATE = {
   teacherPollInFlight: false,
   participantStatsPollTimer: null,
   participantStatsPollInFlight: false,
-  participantStats: null
+  participantStats: null,
+  visitedStationCodes: []
 };
 
 // =========================================================================
@@ -46,6 +48,52 @@ const views = {
 const pinModal = document.getElementById("pin-modal");
 const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
+
+function normalizeStationCodeValue(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function normalizeStationCodeList(values) {
+  return Array.from(new Set((Array.isArray(values) ? values : []).map(normalizeStationCodeValue).filter(Boolean)));
+}
+
+function getVisitedStationStorageSnapshot() {
+  try {
+    const raw = localStorage.getItem(PARTICIPANT_VISITED_STATIONS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return parsed;
+  } catch (_) {
+    return {};
+  }
+}
+
+function loadVisitedStationCodesFromStorage(participantId) {
+  const participantKey = normalizeStationCodeValue(participantId);
+  if (!participantKey) return [];
+  const snapshot = getVisitedStationStorageSnapshot();
+  return normalizeStationCodeList(snapshot[participantKey]);
+}
+
+function persistVisitedStationCodesForCurrentParticipant() {
+  if (STATE.userRole !== "participant" || !STATE.userId) return;
+  const participantKey = normalizeStationCodeValue(STATE.userId);
+  if (!participantKey) return;
+  const snapshot = getVisitedStationStorageSnapshot();
+  snapshot[participantKey] = normalizeStationCodeList(STATE.visitedStationCodes);
+  localStorage.setItem(PARTICIPANT_VISITED_STATIONS_STORAGE_KEY, JSON.stringify(snapshot));
+}
+
+function addVisitedStationCode(stationCode) {
+  const normalized = normalizeStationCodeValue(stationCode);
+  if (!normalized) return;
+  const set = new Set(STATE.visitedStationCodes.map(normalizeStationCodeValue).filter(Boolean));
+  if (set.has(normalized)) return;
+  set.add(normalized);
+  STATE.visitedStationCodes = Array.from(set);
+  persistVisitedStationCodesForCurrentParticipant();
+}
 
 function hideAllViews() {
   Object.values(views).forEach((v) => {
@@ -171,11 +219,13 @@ function startUserSession(role, userId, nickname, extra = {}) {
     localStorage.removeItem("qr_teacher_display_name");
     localStorage.removeItem("qr_teacher_station_code");
     localStorage.removeItem("qr_teacher_station_name");
+    STATE.visitedStationCodes = loadVisitedStationCodesFromStorage(userId);
   } else {
     localStorage.removeItem("qr_participant_id");
     localStorage.setItem("qr_teacher_display_name", STATE.teacherDisplayName || "");
     localStorage.setItem("qr_teacher_station_code", STATE.teacherStationCode || "");
     localStorage.setItem("qr_teacher_station_name", STATE.teacherStationName || "");
+    STATE.visitedStationCodes = [];
   }
 }
 
@@ -204,6 +254,7 @@ async function logoutUser() {
   STATE.teacherStationName = null;
   STATE.pendingScanToken = null;
   STATE.participantStats = null;
+  STATE.visitedStationCodes = [];
 
   showRegisterForm();
   const schoolsLoaded = await loadRegistrationSchools();
@@ -218,6 +269,10 @@ async function logoutUser() {
 // INICJALIZACJA I LOGIKA GLOWNA
 // =========================================================================
 async function initApp() {
+  if (STATE.userRole === "participant" && STATE.userId) {
+    STATE.visitedStationCodes = loadVisitedStationCodesFromStorage(STATE.userId);
+  }
+
   if (STATE.pendingLegacyCode) {
     showToast("Stare kody ?code=... sa nieobslugiwane. Uzyj nowego QR z tokenem.", true);
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -645,7 +700,13 @@ async function loadDashboard() {
 
   const participant = profileRes.data.participant;
   const required_codes_count = profileRes.data.required_codes_count;
-  const visited_station_codes = Array.isArray(profileRes.data.visited_station_codes) ? profileRes.data.visited_station_codes : [];
+  const visitedFromApi = Array.isArray(profileRes.data.visited_station_codes) ? profileRes.data.visited_station_codes : [];
+  const visited_station_codes = normalizeStationCodeList([
+    ...visitedFromApi,
+    ...STATE.visitedStationCodes
+  ]);
+  STATE.visitedStationCodes = visited_station_codes;
+  persistVisitedStationCodesForCurrentParticipant();
   STATE.stations = stationsRes.data && stationsRes.data.stations ? stationsRes.data.stations : [];
 
   if (participant.is_complete === true || participant.is_complete === "TRUE") {
@@ -745,8 +806,10 @@ async function handleScanCode(qrToken) {
   }
 
   if (res.data.is_complete) {
+    addVisitedStationCode(res.data.station_code);
     await loadDashboard();
   } else {
+    addVisitedStationCode(res.data.station_code);
     const isDuplicate = String(res.data.message || "").includes("juz zaliczone");
     document.getElementById("scan-title").innerText = isDuplicate ? "Hej!" : "Swietnie!";
     document.getElementById("scan-message").innerText = res.data.message;
