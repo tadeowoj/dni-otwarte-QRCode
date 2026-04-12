@@ -725,6 +725,73 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     line-height: 1.45;
   }
 
+  .help-content h1,
+  .help-content h2,
+  .help-content h3 {
+    margin: 1rem 0 0.6rem;
+    color: #0f172a;
+    line-height: 1.2;
+  }
+
+  .help-content h1 { font-size: 1.5rem; }
+  .help-content h2 { font-size: 1.2rem; }
+  .help-content h3 { font-size: 1.02rem; }
+
+  .help-content p {
+    margin: 0.5rem 0;
+    color: #1e293b;
+  }
+
+  .help-content hr {
+    border: none;
+    border-top: 1px solid rgba(139, 92, 246, 0.25);
+    margin: 1rem 0;
+  }
+
+  .help-content ul,
+  .help-content ol {
+    margin: 0.5rem 0 0.8rem 1.15rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .help-content code {
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.06);
+    color: #1e293b;
+    font-size: 0.86em;
+  }
+
+  .help-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0;
+    font-size: 0.92rem;
+  }
+
+  .help-content th,
+  .help-content td {
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .help-content th {
+    background: rgba(139, 92, 246, 0.1);
+    color: #334155;
+    font-weight: 700;
+  }
+
+  .help-content .task-item {
+    list-style: none;
+    margin-left: -1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   /* =========================================================================
      ROZDZIAL 12: RESPONSYWNOSC
      ========================================================================= */

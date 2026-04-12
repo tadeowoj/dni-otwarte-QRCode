@@ -54,6 +54,150 @@ const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
 let helpInstructionsLoaded = false;
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderInlineMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  html = html.replace(/`(.+?)`/g, "<code>$1</code>");
+  return html;
+}
+
+function markdownToHtml(markdown) {
+  const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const html = [];
+  let inUl = false;
+  let inOl = false;
+  let inTable = false;
+
+  function closeLists() {
+    if (inUl) {
+      html.push("</ul>");
+      inUl = false;
+    }
+    if (inOl) {
+      html.push("</ol>");
+      inOl = false;
+    }
+  }
+
+  function closeTable() {
+    if (inTable) {
+      html.push("</tbody></table>");
+      inTable = false;
+    }
+  }
+
+  function isTableLine(line) {
+    return /^\s*\|.*\|\s*$/.test(line);
+  }
+
+  function isTableSeparator(line) {
+    return /^\s*\|?[\s:-]+\|[\s|:-]*$/.test(line);
+  }
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const raw = lines[i];
+    const line = raw.trim();
+
+    if (!line) {
+      closeLists();
+      closeTable();
+      continue;
+    }
+
+    if (line === "---") {
+      closeLists();
+      closeTable();
+      html.push("<hr>");
+      continue;
+    }
+
+    if (isTableLine(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      closeLists();
+      closeTable();
+      const headers = line.split("|").slice(1, -1).map((cell) => `<th>${renderInlineMarkdown(cell.trim())}</th>`).join("");
+      html.push(`<table><thead><tr>${headers}</tr></thead><tbody>`);
+      inTable = true;
+      i += 1;
+      continue;
+    }
+
+    if (inTable && isTableLine(line)) {
+      const cells = line.split("|").slice(1, -1).map((cell) => `<td>${renderInlineMarkdown(cell.trim())}</td>`).join("");
+      html.push(`<tr>${cells}</tr>`);
+      continue;
+    }
+
+    closeTable();
+
+    if (/^###\s+/.test(line)) {
+      closeLists();
+      html.push(`<h3>${renderInlineMarkdown(line.replace(/^###\s+/, ""))}</h3>`);
+      continue;
+    }
+
+    if (/^##\s+/.test(line)) {
+      closeLists();
+      html.push(`<h2>${renderInlineMarkdown(line.replace(/^##\s+/, ""))}</h2>`);
+      continue;
+    }
+
+    if (/^#\s+/.test(line)) {
+      closeLists();
+      html.push(`<h1>${renderInlineMarkdown(line.replace(/^#\s+/, ""))}</h1>`);
+      continue;
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      if (!inOl) {
+        closeLists();
+        html.push("<ol>");
+        inOl = true;
+      }
+      html.push(`<li>${renderInlineMarkdown(line.replace(/^\d+\.\s+/, ""))}</li>`);
+      continue;
+    }
+
+    if (/^- \[[ xX]\]\s+/.test(line)) {
+      if (!inUl) {
+        closeLists();
+        html.push("<ul>");
+        inUl = true;
+      }
+      const checked = /^- \[[xX]\]\s+/.test(line) ? "checked" : "";
+      const content = line.replace(/^- \[[ xX]\]\s+/, "");
+      html.push(`<li class="task-item"><input type="checkbox" disabled ${checked}> <span>${renderInlineMarkdown(content)}</span></li>`);
+      continue;
+    }
+
+    if (/^- /.test(line)) {
+      if (!inUl) {
+        closeLists();
+        html.push("<ul>");
+        inUl = true;
+      }
+      html.push(`<li>${renderInlineMarkdown(line.replace(/^- /, ""))}</li>`);
+      continue;
+    }
+
+    closeLists();
+    html.push(`<p>${renderInlineMarkdown(line)}</p>`);
+  }
+
+  closeLists();
+  closeTable();
+  return html.join("");
+}
+
 function normalizeStationCodeValue(value) {
   return String(value == null ? "" : value).trim();
 }
@@ -150,10 +294,7 @@ async function loadHelpInstructions() {
     }
 
     const text = await response.text();
-    const pre = document.createElement("pre");
-    pre.textContent = text;
-    helpContent.innerHTML = "";
-    helpContent.appendChild(pre);
+    helpContent.innerHTML = markdownToHtml(text);
     helpInstructionsLoaded = true;
   } catch (error) {
     console.error("Nie udalo sie zaladowac instrukcji:", error);

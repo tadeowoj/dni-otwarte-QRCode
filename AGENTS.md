@@ -112,6 +112,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Dodano frontendowy fallback dla stanu visited: po udanym `scan_code` uczestnika `station_code` jest zapisywany lokalnie (`localStorage` klucz `qr_participant_visited_station_codes`) i laczony z danymi `get_profile`, dzieki czemu kafelek moze wyszarzyc sie od razu nawet gdy produkcyjny backend chwilowo nie zwraca `visited_station_codes`.
 - Do wszystkich widokow frontendu dodano znak wodny `© by tadeo@zsoiz-czyzew.pl` jako globalny element `app-watermark` (widoki: uczestnik, admin, losowanie i przekierowanie `/losowanie.html`).
 - Widok rejestracji/logowania ma nowy przycisk `Pomoc` pod logo tarczy; klik otwiera modal z przyciemnieniem tła i treścią instrukcji ładowaną z `INSTRUKCJE.md` (kopiowaną do `frontend/public/INSTRUKCJE.md` na potrzeby builda i deployu).
+- Modal `Pomoc` renderuje teraz instrukcje z markdowna do sformatowanego HTML po stronie frontendu (naglowki, listy, tabela, checkboxy), zamiast wyswietlac surowy tekst.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
