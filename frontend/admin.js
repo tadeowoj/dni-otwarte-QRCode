@@ -189,28 +189,20 @@ function renderData(data) {
     const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
     const isIssued = (p.reward_issued === true || p.reward_issued === "TRUE");
 
-    const statusBadge = isComplete 
-      ? `<span class="badge badge-success">Komplet</span>` 
+    const statusBadge = isComplete
+      ? `<span class="badge badge-success">Komplet</span>`
       : `<span class="badge badge-pending">W grze</span>`;
 
     const rewardBadge = isIssued
       ? `<span class="badge badge-success">Tak</span>`
       : `<span class="badge badge-pending">Nie</span>`;
 
-    // Przycisk "Wydaj Nagrodę" aktywny tylko gdy gracz ma Komplet, a nagroda NIE jest wydana
-    const canIssue = (isComplete && !isIssued);
-    
     const deleteBtn = `<button class="btn-small btn-danger delete-cmd" data-id="${p.participant_id}" title="Usuń uczestnika" style="padding: 6px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
       </svg>
     </button>`;
-
-    const actionBtn = canIssue
-      ? `<button class="btn-small issue-cmd" data-id="${p.participant_id}" style="margin-right: 4px; vertical-align: middle;">Wydaj Nagrodę</button>${deleteBtn}`
-      : deleteBtn;
-
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -220,7 +212,7 @@ function renderData(data) {
       <td>${p.codes_collected_count}</td>
       <td>${statusBadge}</td>
       <td id="reward-cell-${p.participant_id}">${rewardBadge}</td>
-      <td id="action-cell-${p.participant_id}">${actionBtn}</td>
+      <td id="action-cell-${p.participant_id}">${deleteBtn}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -246,26 +238,6 @@ function renderData(data) {
   });
 
   renderDrawParticipants();
-
-  document.querySelectorAll('.issue-cmd').forEach(btn => {
-    btn.addEventListener('click', async function() {
-       const pid = this.getAttribute('data-id');
-       this.innerText = "Zapisuję...";
-       this.disabled = true;
-
-       const res = await fetchAPI("issue_reward", { pin: CURRENT_PIN, participant_id: pid });
-       
-       if (res.status === "success") {
-          showToast(res.message);
-          document.getElementById(`reward-cell-${pid}`).innerHTML = `<span class="badge badge-success">Tak</span>`;
-          this.remove();
-       } else {
-          showToast(res.message, true);
-          this.innerText = "Wydaj Nagrodę";
-          this.disabled = false;
-       }
-    });
-  });
 
   document.querySelectorAll('.delete-cmd').forEach(btn => {
     btn.addEventListener('click', async function() {
@@ -339,3 +311,4 @@ function stopAutoRefresh() {
     clearSession();
   }
 })();
+

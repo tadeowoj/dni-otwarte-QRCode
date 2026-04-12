@@ -113,6 +113,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Do wszystkich widokow frontendu dodano znak wodny `© by tadeo@zsoiz-czyzew.pl` jako globalny element `app-watermark` (widoki: uczestnik, admin, losowanie i przekierowanie `/losowanie.html`).
 - Widok rejestracji/logowania ma nowy przycisk `Pomoc` pod logo tarczy; klik otwiera modal z przyciemnieniem tła i treścią instrukcji ładowaną z `INSTRUKCJE.md` (kopiowaną do `frontend/public/INSTRUKCJE.md` na potrzeby builda i deployu).
 - Modal `Pomoc` renderuje teraz instrukcje z markdowna do sformatowanego HTML po stronie frontendu (naglowki, listy, tabela, checkboxy), zamiast wyswietlac surowy tekst.
+- W widoku admina usunieto przycisk `Wydaj Nagrode` z kolumny `Akcja`; pozostawiono tylko przycisk usuwania uczestnika.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
