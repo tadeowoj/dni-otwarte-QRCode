@@ -725,6 +725,25 @@ routerAdd("POST", "/api/qr-action", (e) => {
   
     return result;
   }
+
+  var getLotteryData = function(app, payload) {
+    const safePayload = payload || {};
+    const pin = safePayload.pin;
+
+    if (!isAdminPinValid(app, pin)) return error("Odmowa dostepu - nieprawidlowy PIN administratora.");
+
+    const finalists = findRecordsByFilter(app, COLLECTIONS.participants, "in_draw = true", "nickname", 500, 0)
+      .map((p) => ({
+        nickname: p.get("nickname"),
+        first_name_last_name: p.get("first_name_last_name"),
+        school_name: p.get("school_name")
+      }));
+
+    return success({
+      finalists,
+      count: finalists.length
+    });
+  }
   
   var dispatchAction = function(app, action, payload) {
     switch (action) {
@@ -756,6 +775,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
         return updateDrawParticipants(app, payload);
       case "delete_participant":
         return deleteParticipant(app, payload);
+      case "get_lottery_data":
+        return getLotteryData(app, payload);
       default:
         return error(`Nieznana akcja API: ${action}`);
     }

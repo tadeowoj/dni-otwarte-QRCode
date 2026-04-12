@@ -582,3 +582,139 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
       right: 16px;
     }
   }
+
+  /* =========================================================================
+     ROZDZIAL 13: WIDOK LOSOWANIA (BIG SCREEN)
+     ========================================================================= */
+  .lottery-container {
+    max-width: 1200px !important;
+    width: 95% !important;
+    padding: 40px 20px !important;
+  }
+
+  .lottery-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    animation: fadeInDown 1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .lottery-logo-wrapper {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, var(--clr-purple-light), var(--clr-purple-dark));
+    padding: 6px;
+    border-radius: 32px;
+    box-shadow: 0 15px 35px rgba(109, 40, 217, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .lottery-logo-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 26px;
+    background: #fff;
+  }
+
+  .lottery-main-title {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-family: var(--font-heading);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--clr-text), var(--clr-purple-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-top: 15px;
+  }
+
+  .lottery-status-card {
+    text-align: center;
+    padding: 80px 40px;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 30px 60px rgba(76, 29, 149, 0.08);
+    animation: floatLottery 4s infinite ease-in-out;
+  }
+
+  .glowing-text {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    color: var(--clr-purple-dark);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    text-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+    margin: 30px 0;
+  }
+
+  .loader-spinner.large {
+    width: 100px;
+    height: 100px;
+    border-width: 8px;
+    margin-bottom: 20px;
+  }
+
+  .finalists-area {
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  .finalists-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+    perspective: 1000px;
+  }
+
+  .finalist-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    padding: 28px;
+    border-radius: 24px;
+    border: 1px solid var(--clr-glass-border);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  }
+
+  .finalist-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(109, 40, 217, 0.12);
+    border-color: var(--clr-purple-light);
+  }
+
+  .finalist-nickname {
+    font-size: 1.8rem;
+    font-weight: 800;
+    font-family: var(--font-heading);
+    color: var(--clr-purple-dark);
+  }
+
+  .finalist-school {
+    font-size: 1rem;
+    color: var(--clr-text-muted);
+    font-weight: 500;
+  }
+
+  @keyframes floatLottery {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.6) rotateX(20deg); opacity: 0; }
+    to { transform: scale(1) rotateX(0); opacity: 1; }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-50px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+

@@ -78,6 +78,8 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Panel admina ma trwala sesje: PIN jest zapisywany w `localStorage` pod kluczem `qr_admin_session_pin` i przywracany po odswiezeniu strony; przycisk `Wyloguj` czysci sesje i wraca do ekranu logowania.
 - W panelu admina zmieniono wyszarzony przycisk "Brak akcji" w wierszu gracza na czerwony przycisk z ikoną kosza ("Usuń"); po jego kliknięciu i potwierdzeniu monitu, użytkownik i jego skany są usuwani z bazy (nowa akcja `delete_participant` w `main.pb.js`). W tym celu dodano też klasę `.btn-danger` do CSS.
 - Do widoku głównego admina dodano mechanizm automatycznego odświeżania tabeli graczy i statystyk (odpytywanie API co 10 sekund); mechanizm współpracuje z listą do losowania i wstrzymuje nadpisywanie zmian, jeżeli odczyta, że admin nie zapisał świeżo zaznaczonych graczy.
+- Wdrożono nowy widok `/losowanie.html` przeznaczony na duży ekran: wymaga PINu admina, wyświetla animowany status "Trwa ustalanie listy finalistów..." lub listę graczy (akcja `get_lottery_data`), wykorzystuje asset logo i zaawansowane animacje CSS.
+- Backend PocketBase ma nową akcję `get_lottery_data` (wymaga `pin`), która zwraca listę uczestników z flagą `in_draw=true`.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -118,4 +120,5 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
-- Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
+- Wykonać smoke test nowego widoku `/losowanie.html`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.
+- Po każdej istotnej zmianie aktualizować ten plik (`AGENTS.md`) jako jedyne źródło kontekstu dla kolejnych sesji.
