@@ -5,7 +5,7 @@
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
-const TEACHER_PANEL_POLL_INTERVAL_MS = 2000;
+const TEACHER_PANEL_POLL_INTERVAL_MS = 4500;
 
 const queryParams = new URLSearchParams(window.location.search);
 
