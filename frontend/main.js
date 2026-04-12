@@ -46,8 +46,13 @@ const views = {
 };
 
 const pinModal = document.getElementById("pin-modal");
+const helpModal = document.getElementById("help-modal");
+const helpContent = document.getElementById("help-content");
+const helpButton = document.getElementById("btn-help");
+const closeHelpButton = document.getElementById("btn-close-help");
 const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
+let helpInstructionsLoaded = false;
 
 function normalizeStationCodeValue(value) {
   return String(value == null ? "" : value).trim();
@@ -132,6 +137,39 @@ function openPinModal() {
 function closePinModal() {
   pinModal.classList.remove("active");
   pinModal.setAttribute("aria-hidden", "true");
+}
+
+async function loadHelpInstructions() {
+  if (helpInstructionsLoaded) return;
+  helpContent.innerHTML = '<p class="help-loading">Ladowanie instrukcji...</p>';
+
+  try {
+    const response = await fetch("/INSTRUKCJE.md", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const text = await response.text();
+    const pre = document.createElement("pre");
+    pre.textContent = text;
+    helpContent.innerHTML = "";
+    helpContent.appendChild(pre);
+    helpInstructionsLoaded = true;
+  } catch (error) {
+    console.error("Nie udalo sie zaladowac instrukcji:", error);
+    helpContent.innerHTML = '<p class="help-loading">Nie udalo sie zaladowac instrukcji. Odswiez strone i sprobuj ponownie.</p>';
+  }
+}
+
+function openHelpModal() {
+  helpModal.classList.add("active");
+  helpModal.setAttribute("aria-hidden", "false");
+  loadHelpInstructions();
+}
+
+function closeHelpModal() {
+  helpModal.classList.remove("active");
+  helpModal.setAttribute("aria-hidden", "true");
 }
 
 function showRegisterForm() {
@@ -367,6 +405,26 @@ document.getElementById("btn-show-login").addEventListener("click", () => {
 document.getElementById("btn-show-register").addEventListener("click", () => {
   showRegisterForm();
   document.getElementById("reg-name").focus();
+});
+
+helpButton.addEventListener("click", () => {
+  openHelpModal();
+});
+
+closeHelpButton.addEventListener("click", () => {
+  closeHelpModal();
+});
+
+helpModal.addEventListener("click", (event) => {
+  if (event.target === helpModal) {
+    closeHelpModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && helpModal.classList.contains("active")) {
+    closeHelpModal();
+  }
 });
 
 // =========================================================================

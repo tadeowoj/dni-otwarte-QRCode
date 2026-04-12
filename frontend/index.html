@@ -27,10 +27,14 @@
 
     <section id="view-register" class="view hidden">
       <div class="glass-card start-card">
-        <div class="hero-logo-shell" aria-hidden="true">
+        <div class="hero-logo-shell">
           <video class="hero-logo-video" autoplay loop muted playsinline preload="auto">
             <source src="/img/logo.webm" type="video/webm">
           </video>
+          <button type="button" id="btn-help" class="hero-help-btn" aria-label="Otworz instrukcje">
+            <span class="hero-help-icon">?</span>
+            <span>Pomoc</span>
+          </button>
         </div>
         <div class="start-hero">
           <div class="start-hero-headline">
@@ -191,6 +195,18 @@
           <span>Zapisz PIN i przejdz dalej</span>
         </button>
       </form>
+    </div>
+  </div>
+
+  <div id="help-modal" class="modal-overlay help-modal-overlay" aria-hidden="true">
+    <div class="glass-card modal-card help-modal-card" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+      <div class="help-modal-header">
+        <h2 id="help-modal-title">Pomoc i instrukcja</h2>
+        <button type="button" id="btn-close-help" class="help-close-btn" aria-label="Zamknij instrukcje">x</button>
+      </div>
+      <div id="help-content" class="help-content">
+        <p class="help-loading">Ladowanie instrukcji...</p>
+      </div>
     </div>
   </div>
 
