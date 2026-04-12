@@ -84,6 +84,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Ekran `/losowanie/` domyślnie pokazuje duży animowany komunikat `Trwa ustalanie listy finalistów...`, a PIN admina działa jako dyskretny panel kontrolny w prawym dolnym rogu.
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
 - Naprawiono bialy ekran w widoku uczestnika na mobile po dodaniu globalnej klasy `.hidden`: `frontend/main.js` aktualnie przy `showView()` usuwa `hidden` z docelowego widoku, a `hideAllViews()` dodaje `hidden` do pozostalych.
+- Panel admina zapisuje teraz liste losowania natychmiast po zmianie checkboxa (akcja `update_draw_participants` wywolywana od razu po kliknieciu), bez recznego kroku zapisu.
+- Z widoku admina usunieto przyciski `Zapisz do bazy` i `Odśwież dane`; auto-odswiezanie co 10 sekund zostalo zachowane.
+- Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -122,6 +125,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
+- Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
 - Wykonać smoke test nowego widoku `/losowanie/`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.

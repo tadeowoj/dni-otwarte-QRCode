@@ -3,7 +3,6 @@ const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 
 let CURRENT_PIN = "";
 const DRAW_PARTICIPANTS = new Map();
-let ORIGINAL_DRAW_IDS = new Set();
 let adminAutoRefreshInterval = null;
 
 function saveSession(pin) {
@@ -51,21 +50,11 @@ function createDrawParticipantSnapshot(participant) {
 
 function initDrawFromApiData(participants) {
   DRAW_PARTICIPANTS.clear();
-  ORIGINAL_DRAW_IDS.clear();
   participants.forEach((p) => {
     if (isTruthyValue(p.in_draw)) {
       DRAW_PARTICIPANTS.set(String(p.participant_id), createDrawParticipantSnapshot(p));
-      ORIGINAL_DRAW_IDS.add(String(p.participant_id));
     }
   });
-}
-
-function hasUnsavedDrawChanges() {
-  if (DRAW_PARTICIPANTS.size !== ORIGINAL_DRAW_IDS.size) return true;
-  for (let id of DRAW_PARTICIPANTS.keys()) {
-    if (!ORIGINAL_DRAW_IDS.has(id)) return true;
-  }
-  return false;
 }
 
 function renderDrawParticipants() {
@@ -90,19 +79,36 @@ function renderDrawParticipants() {
   `).join("");
 
   document.querySelectorAll(".draw-remove-cmd").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
       const participantId = btn.getAttribute("data-id");
-      DRAW_PARTICIPANTS.delete(participantId);
-      renderDrawParticipants();
+      const participant = DRAW_PARTICIPANTS.get(participantId);
+      if (!participant) {
+        btn.disabled = false;
+        return;
+      }
 
-      const checkbox = document.querySelector(`.draw-checkbox[data-id="${participantId}"]`);
-      if (checkbox) checkbox.checked = false;
+      const saved = await setDrawParticipant(participant, false);
+      if (saved) {
+        const checkbox = document.querySelector(`.draw-checkbox[data-id="${participantId}"]`);
+        if (checkbox) checkbox.checked = false;
+      }
+      btn.disabled = false;
     });
   });
 }
 
-function setDrawParticipant(participant, selected) {
+async function persistDrawParticipants() {
+  const participant_ids = Array.from(DRAW_PARTICIPANTS.keys());
+  return fetchAPI("update_draw_participants", {
+    pin: CURRENT_PIN,
+    participant_ids
+  });
+}
+
+async function setDrawParticipant(participant, selected) {
   const participantId = String(participant.participant_id);
+  const previousDrawParticipants = new Map(DRAW_PARTICIPANTS);
 
   if (selected) {
     DRAW_PARTICIPANTS.set(participantId, createDrawParticipantSnapshot(participant));
@@ -111,6 +117,16 @@ function setDrawParticipant(participant, selected) {
   }
 
   renderDrawParticipants();
+  const res = await persistDrawParticipants();
+  if (res.status === "success") {
+    return true;
+  }
+
+  DRAW_PARTICIPANTS.clear();
+  previousDrawParticipants.forEach((snapshot, id) => DRAW_PARTICIPANTS.set(id, snapshot));
+  renderDrawParticipants();
+  showToast(res.message || "Nie udalo sie zapisac zmian losowania.", true);
+  return false;
 }
 
 async function fetchAPI(action, payload) {
@@ -153,20 +169,6 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
   startAutoRefresh();
 });
 
-document.getElementById('btn-refresh').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-refresh');
-  btn.innerText = "Wczytywanie...";
-  const res = await fetchAPI("get_admin_data", { pin: CURRENT_PIN });
-  btn.innerText = "Odśwież dane";
-
-  if (res.status === "success") {
-    renderData(res.data);
-    showToast("Dane zostały odświeżone z chmury.");
-  } else {
-    showToast(res.message, true);
-  }
-});
-
 function renderData(data) {
   // Statystyki
   document.getElementById('stat-participants').innerText = data.stats.total_participants;
@@ -176,9 +178,7 @@ function renderData(data) {
 
   // Inicjalizacja listy losowania z API
   const tbody = document.getElementById('table-body');
-  if (!hasUnsavedDrawChanges()) {
-    initDrawFromApiData(data.participants);
-  }
+  initDrawFromApiData(data.participants);
   tbody.innerHTML = '';
 
   data.participants.forEach(p => {
@@ -223,11 +223,21 @@ function renderData(data) {
 
   // Dodajemy event listenery delegegowanie dla renderowanych buttonów
   document.querySelectorAll('.draw-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
+    checkbox.addEventListener('change', async function() {
+      this.disabled = true;
       const participantId = this.getAttribute('data-id');
       const participant = data.participants.find((item) => String(item.participant_id) === String(participantId));
-      if (!participant) return;
-      setDrawParticipant(participant, this.checked);
+      if (!participant) {
+        this.disabled = false;
+        return;
+      }
+
+      const previousValue = !this.checked;
+      const saved = await setDrawParticipant(participant, this.checked);
+      if (!saved) {
+        this.checked = previousValue;
+      }
+      this.disabled = false;
     });
   });
 
@@ -268,7 +278,10 @@ function renderData(data) {
       
       if (res.status === "success") {
         showToast("Uczestnik został usunięty.");
-        document.getElementById('btn-refresh').click(); // Odśwież widok po usunięciu
+        const refreshRes = await fetchAPI("get_admin_data", { pin: CURRENT_PIN });
+        if (refreshRes.status === "success") {
+          renderData(refreshRes.data);
+        }
       } else {
         showToast(res.message, true);
         this.innerHTML = originalHtml;
@@ -277,29 +290,6 @@ function renderData(data) {
     });
   });
 }
-
-// --- Save draw list to database ---
-document.getElementById('btn-save-draw').addEventListener('click', async () => {
-  const btn = document.getElementById('btn-save-draw');
-  btn.innerText = "Zapisywanie...";
-  btn.disabled = true;
-
-  const participant_ids = Array.from(DRAW_PARTICIPANTS.keys());
-  const res = await fetchAPI("update_draw_participants", {
-    pin: CURRENT_PIN,
-    participant_ids
-  });
-
-  btn.innerText = "Zapisz do bazy";
-  btn.disabled = false;
-
-  if (res.status === "success") {
-    showToast(res.data.message || "Lista losowania zapisana.");
-    ORIGINAL_DRAW_IDS = new Set(DRAW_PARTICIPANTS.keys());
-  } else {
-    showToast(res.message, true);
-  }
-});
 
 // --- Logout ---
 document.getElementById('btn-logout').addEventListener('click', () => {
