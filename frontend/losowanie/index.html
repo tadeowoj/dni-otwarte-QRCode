@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Losowanie - Wielki finał</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="lottery-body">
+  <main id="app-container" class="lottery-stage">
+    <div id="toast" class="toast"></div>
+
+    <section id="view-lottery" class="view active lottery-screen" aria-live="polite">
+      <div class="lottery-ribbons" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <div class="lottery-sky" aria-hidden="true">
+        <span class="lottery-orbit orbit-one"></span>
+        <span class="lottery-orbit orbit-two"></span>
+        <span class="lottery-orbit orbit-three"></span>
+      </div>
+
+      <header class="lottery-topline">
+        <div class="lottery-logo-mark">
+          <video class="lottery-logo-video" autoplay loop muted playsinline preload="auto">
+            <source src="/img/logo.webm" type="video/webm">
+          </video>
+        </div>
+        <p>Dni Otwarte ZSOiZ Czyżew</p>
+      </header>
+
+      <div class="lottery-content">
+        <div id="waiting-state" class="lottery-waiting">
+          <p class="lottery-kicker">Za chwilę wielki finał</p>
+          <h1>Trwa ustalanie listy finalistów...</h1>
+          <div class="lottery-countdown" aria-hidden="true">
+            <span>3</span>
+            <span>2</span>
+            <span>1</span>
+          </div>
+          <p class="lottery-sub-message">Lista jeszcze się układa. Emocje mogą podskakiwać, to normalne.</p>
+        </div>
+
+        <div id="finalists-state" class="finalists-area hidden">
+          <div class="finalists-heading">
+            <p class="lottery-kicker">Lista finalistów</p>
+            <h1>W losowaniu gra <span id="finalist-count">0</span> osób</h1>
+          </div>
+          <div id="finalists-grid" class="finalists-grid"></div>
+        </div>
+      </div>
+
+      <form id="lottery-login-form" class="lottery-control-panel" autocomplete="off">
+        <label for="admin-pin">PIN admina</label>
+        <div class="lottery-control-row">
+          <input type="password" id="admin-pin" placeholder="****" autocomplete="current-password" required>
+          <button type="submit" id="btn-login" class="btn-secondary">Połącz</button>
+          <button type="button" id="btn-lottery-logout" class="btn-ghost hidden">Rozłącz</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script type="module" src="../losowanie.js"></script>
+</body>
+</html>

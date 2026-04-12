@@ -11,7 +11,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         admin: resolve(__dirname, 'admin.html'),
-        losowanie: resolve(__dirname, 'losowanie.html')
+        losowanie: resolve(__dirname, 'losowanie/index.html'),
+        losowanieLegacy: resolve(__dirname, 'losowanie.html')
       }
     }
   },

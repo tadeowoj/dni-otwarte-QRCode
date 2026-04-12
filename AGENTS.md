@@ -80,6 +80,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Do widoku głównego admina dodano mechanizm automatycznego odświeżania tabeli graczy i statystyk (odpytywanie API co 10 sekund); mechanizm współpracuje z listą do losowania i wstrzymuje nadpisywanie zmian, jeżeli odczyta, że admin nie zapisał świeżo zaznaczonych graczy.
 - Wdrożono nowy widok `/losowanie.html` przeznaczony na duży ekran: wymaga PINu admina, wyświetla animowany status "Trwa ustalanie listy finalistów..." lub listę graczy (akcja `get_lottery_data`), wykorzystuje asset logo i zaawansowane animacje CSS.
 - Backend PocketBase ma nową akcję `get_lottery_data` (wymaga `pin`), która zwraca listę uczestników z flagą `in_draw=true`.
+- Widok losowania został przeniesiony na czysty frontendowy endpoint `/losowanie/`; `/losowanie.html` został jako przekierowanie wstecznej kompatybilności.
+- Ekran `/losowanie/` domyślnie pokazuje duży animowany komunikat `Trwa ustalanie listy finalistów...`, a PIN admina działa jako dyskretny panel kontrolny w prawym dolnym rogu.
+- Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -120,5 +123,5 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
-- Wykonać smoke test nowego widoku `/losowanie.html`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.
+- Wykonać smoke test nowego widoku `/losowanie/`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.
 - Po każdej istotnej zmianie aktualizować ten plik (`AGENTS.md`) jako jedyne źródło kontekstu dla kolejnych sesji.
