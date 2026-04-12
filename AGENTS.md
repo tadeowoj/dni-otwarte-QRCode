@@ -102,7 +102,10 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Klikniecie przycisku `Rozdaj fanty!` odtwarza teraz dzwiek `/losowanko.mp3` (asset z `frontend/public/losowanko.mp3`) przy kazdej rundzie losowania, jednokrotnie i bez petli.
 - Dashboard uczestnika (po zalogowaniu) ma nowy blok live statystyk pod paskiem postepu: `Punkty lidera` i `Uczestnicy w grze`.
 - Frontend `frontend/main.js` odswieza statystyki uczestnika przez akcje `get_stats` co 5 sekund tylko podczas aktywnego widoku `dashboard`; polling zatrzymuje sie po wyjsciu z dashboardu i przy wylogowaniu.
-- Backend `get_stats` w `pocketbase/pb_hooks/main.pb.js` zwraca dodatkowo `leader_points` (max `codes_collected_count`) i `collecting_participants_count` (wszyscy zarejestrowani uczestnicy), bez usuwania starych pol.
+- Backend `get_stats` w `pocketbase/pb_hooks/main.pb.js` zwraca dodatkowo `leader_points` (max `codes_collected_count`) i `collecting_participants_count` (uczestnicy z `reward_issued == false` oraz `is_complete == false`), bez usuwania starych pol.
+- Etykieta live statystyki lidera w dashboardzie uczestnika zostala zmieniona na: `Uczestnik na prowadzeniu ma punktów:`.
+- Logika `collecting_participants_count` w `get_stats` zostala doprecyzowana: liczba uczestnikow z `reward_issued == false` oraz `is_complete == false`.
+- Zdiagnozowano przyczyne stalego `0` w UI: produkcyjny endpoint `get_stats` nie zwracal nowych pol (`leader_points`, `collecting_participants_count`), a frontend mial fallback do `0`; frontend zaktualizowano defensywnie, aby brak pola nie resetowal widoku.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -141,7 +144,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
-- Wykonac reczny smoke test dashboardu uczestnika: czy nowe live statystyki (`Punkty lidera`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.
+- Wykonac reczny smoke test dashboardu uczestnika: czy live statystyki (`Uczestnik na prowadzeniu ma punktów:`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.
+- Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (poprawione `get_stats` z `leader_points` i `collecting_participants_count`) i zrestartowac instancje PocketBase.
+- Potwierdzic na produkcji przez `POST /api/qr-action` (`action=get_stats`), ze response zawiera pola `leader_points` oraz `collecting_participants_count`.
 - Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.

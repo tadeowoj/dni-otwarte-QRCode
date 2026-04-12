@@ -508,11 +508,16 @@ function stopTeacherPanelPolling() {
 }
 
 function renderParticipantStats(statsData) {
-  const leaderPoints = Number(statsData && statsData.leader_points) || 0;
-  const collectingParticipants = Number(statsData && statsData.collecting_participants_count) || 0;
+  const leaderPoints = Number(statsData && statsData.leader_points);
+  const collectingParticipants = Number(statsData && statsData.collecting_participants_count);
 
-  document.getElementById("dash-leader-points").innerText = String(leaderPoints);
-  document.getElementById("dash-collecting-participants").innerText = String(collectingParticipants);
+  if (Number.isFinite(leaderPoints)) {
+    document.getElementById("dash-leader-points").innerText = String(leaderPoints);
+  }
+
+  if (Number.isFinite(collectingParticipants)) {
+    document.getElementById("dash-collecting-participants").innerText = String(collectingParticipants);
+  }
 }
 
 async function refreshParticipantStatsSilently() {
@@ -529,10 +534,20 @@ async function refreshParticipantStatsSilently() {
     const response = await fetchAPI("get_stats", {});
     if (response.status === "success" && STATE.userRole === "participant" && views.dashboard.classList.contains("active")) {
       const statsData = response.data || {};
-      STATE.participantStats = {
-        leader_points: Number(statsData.leader_points) || 0,
-        collecting_participants_count: Number(statsData.collecting_participants_count) || 0
-      };
+      const previousStats = STATE.participantStats || {};
+      const nextStats = { ...previousStats };
+      const leaderPoints = Number(statsData.leader_points);
+      const collectingParticipants = Number(statsData.collecting_participants_count);
+
+      if (Number.isFinite(leaderPoints)) {
+        nextStats.leader_points = leaderPoints;
+      }
+
+      if (Number.isFinite(collectingParticipants)) {
+        nextStats.collecting_participants_count = collectingParticipants;
+      }
+
+      STATE.participantStats = nextStats;
       renderParticipantStats(STATE.participantStats);
     }
   } finally {

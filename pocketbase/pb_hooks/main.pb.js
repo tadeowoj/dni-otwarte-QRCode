@@ -618,10 +618,13 @@ routerAdd("POST", "/api/qr-action", (e) => {
       const points = Number(participant.get("codes_collected_count")) || 0;
       return points > max ? points : max;
     }, 0);
+    const collectingParticipantsCount = participants.filter((participant) => {
+      return !isTruthy(participant.get("reward_issued")) && !isTruthy(participant.get("is_complete"));
+    }).length;
   
     return success({
       participants_count: participants.length,
-      collecting_participants_count: participants.length,
+      collecting_participants_count: collectingParticipantsCount,
       leader_points: leaderPoints,
       completed_count: participants.filter((p) => isTruthy(p.get("is_complete"))).length,
       total_scans: scans.length,
