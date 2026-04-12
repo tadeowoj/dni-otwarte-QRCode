@@ -23,7 +23,11 @@ const views = {
 };
 
 function showView(v) {
-  Object.values(views).forEach(el => el.classList.remove('active'));
+  Object.values(views).forEach(el => {
+    el.classList.remove('active');
+    el.classList.add('hidden');
+  });
+  views[v].classList.remove('hidden');
   views[v].classList.add('active');
 }
 

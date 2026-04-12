@@ -87,6 +87,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Panel admina zapisuje teraz liste losowania natychmiast po zmianie checkboxa (akcja `update_draw_participants` wywolywana od razu po kliknieciu), bez recznego kroku zapisu.
 - Z widoku admina usunieto przyciski `Zapisz do bazy` i `Odśwież dane`; auto-odswiezanie co 10 sekund zostalo zachowane.
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
+- Naprawiono biala strone w panelu admina po logowaniu: `frontend/admin.js` w `showView()` usuwa teraz klase `hidden` z docelowego widoku i dodaje `hidden` do pozostalych.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
