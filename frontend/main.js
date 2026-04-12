@@ -43,13 +43,19 @@ const registerForm = document.getElementById("register-form");
 const loginForm = document.getElementById("login-form");
 
 function hideAllViews() {
-  Object.values(views).forEach((v) => v.classList.remove("active"));
+  Object.values(views).forEach((v) => {
+    v.classList.remove("active");
+    v.classList.add("hidden");
+  });
 }
 
 function showView(viewName) {
   if (viewName !== "teacher") stopTeacherPanelPolling();
   hideAllViews();
-  if (views[viewName]) views[viewName].classList.add("active");
+  if (views[viewName]) {
+    views[viewName].classList.remove("hidden");
+    views[viewName].classList.add("active");
+  }
 }
 
 function showToast(message, isError = false) {

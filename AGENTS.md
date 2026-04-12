@@ -83,6 +83,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Widok losowania został przeniesiony na czysty frontendowy endpoint `/losowanie/`; `/losowanie.html` został jako przekierowanie wstecznej kompatybilności.
 - Ekran `/losowanie/` domyślnie pokazuje duży animowany komunikat `Trwa ustalanie listy finalistów...`, a PIN admina działa jako dyskretny panel kontrolny w prawym dolnym rogu.
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
+- Naprawiono bialy ekran w widoku uczestnika na mobile po dodaniu globalnej klasy `.hidden`: `frontend/main.js` aktualnie przy `showView()` usuwa `hidden` z docelowego widoku, a `hideAllViews()` dodaje `hidden` do pozostalych.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
