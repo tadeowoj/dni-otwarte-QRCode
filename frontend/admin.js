@@ -1,9 +1,8 @@
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
-const DRAW_STORAGE_KEY = "qr_admin_draw_participants";
 const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 
 let CURRENT_PIN = "";
-const DRAW_PARTICIPANTS = new Map(loadDrawParticipants());
+const DRAW_PARTICIPANTS = new Map();
 
 function saveSession(pin) {
   localStorage.setItem(SESSION_STORAGE_KEY, pin);
@@ -34,22 +33,8 @@ function showToast(message, isError = false) {
   setTimeout(() => toast.classList.remove('show'), 4000);
 }
 
-function loadDrawParticipants() {
-  try {
-    const storedValue = localStorage.getItem(DRAW_STORAGE_KEY);
-    if (!storedValue) return [];
-    const parsed = JSON.parse(storedValue);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter((item) => item && item.participant_id)
-      .map((item) => [String(item.participant_id), item]);
-  } catch (err) {
-    return [];
-  }
-}
-
-function saveDrawParticipants() {
-  localStorage.setItem(DRAW_STORAGE_KEY, JSON.stringify(Array.from(DRAW_PARTICIPANTS.values())));
+function isTruthyValue(value) {
+  return value === true || value === "TRUE" || value === "true" || value === 1 || value === "1";
 }
 
 function createDrawParticipantSnapshot(participant) {
@@ -62,23 +47,13 @@ function createDrawParticipantSnapshot(participant) {
   };
 }
 
-function syncDrawParticipants(participants) {
-  const currentIds = new Set(participants.map((participant) => String(participant.participant_id)));
-
-  Array.from(DRAW_PARTICIPANTS.keys()).forEach((participantId) => {
-    if (!currentIds.has(participantId)) {
-      DRAW_PARTICIPANTS.delete(participantId);
+function initDrawFromApiData(participants) {
+  DRAW_PARTICIPANTS.clear();
+  participants.forEach((p) => {
+    if (isTruthyValue(p.in_draw)) {
+      DRAW_PARTICIPANTS.set(String(p.participant_id), createDrawParticipantSnapshot(p));
     }
   });
-
-  participants.forEach((participant) => {
-    const participantId = String(participant.participant_id);
-    if (DRAW_PARTICIPANTS.has(participantId)) {
-      DRAW_PARTICIPANTS.set(participantId, createDrawParticipantSnapshot(participant));
-    }
-  });
-
-  saveDrawParticipants();
 }
 
 function renderDrawParticipants() {
@@ -106,7 +81,6 @@ function renderDrawParticipants() {
     btn.addEventListener("click", () => {
       const participantId = btn.getAttribute("data-id");
       DRAW_PARTICIPANTS.delete(participantId);
-      saveDrawParticipants();
       renderDrawParticipants();
 
       const checkbox = document.querySelector(`.draw-checkbox[data-id="${participantId}"]`);
@@ -124,7 +98,6 @@ function setDrawParticipant(participant, selected) {
     DRAW_PARTICIPANTS.delete(participantId);
   }
 
-  saveDrawParticipants();
   renderDrawParticipants();
 }
 
@@ -188,10 +161,10 @@ function renderData(data) {
   document.getElementById('stat-scans').innerText = data.stats.total_scans;
   document.getElementById('stat-stations').innerText = data.stats.total_stations;
 
-  // Tabela
+  // Inicjalizacja listy losowania z API
   const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
-  syncDrawParticipants(data.participants);
+  initDrawFromApiData(data.participants);
 
   data.participants.forEach(p => {
     const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
@@ -256,6 +229,28 @@ function renderData(data) {
     });
   });
 }
+
+// --- Save draw list to database ---
+document.getElementById('btn-save-draw').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save-draw');
+  btn.innerText = "Zapisywanie...";
+  btn.disabled = true;
+
+  const participant_ids = Array.from(DRAW_PARTICIPANTS.keys());
+  const res = await fetchAPI("update_draw_participants", {
+    pin: CURRENT_PIN,
+    participant_ids
+  });
+
+  btn.innerText = "Zapisz do bazy";
+  btn.disabled = false;
+
+  if (res.status === "success") {
+    showToast(res.data.message || "Lista losowania zapisana.");
+  } else {
+    showToast(res.message, true);
+  }
+});
 
 // --- Logout ---
 document.getElementById('btn-logout').addEventListener('click', () => {

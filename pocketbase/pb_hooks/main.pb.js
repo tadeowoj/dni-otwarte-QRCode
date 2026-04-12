@@ -104,7 +104,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
       "status",
       "normalized_name",
       "normalized_nickname",
-      "normalized_school"
+      "normalized_school",
+      "in_draw"
     ]);
   }
   
@@ -674,6 +675,32 @@ routerAdd("POST", "/api/qr-action", (e) => {
     return success({ message: `Oznaczono wydanie nagrody dla gracza: ${participant.get("nickname")}` });
   }
   
+  var updateDrawParticipants = function(app, payload) {
+    const safePayload = payload || {};
+    const pin = safePayload.pin;
+  
+    if (!isAdminPinValid(app, pin)) return error("Odmowa dostepu");
+  
+    const participant_ids = Array.isArray(safePayload.participant_ids) ? safePayload.participant_ids : [];
+    const idSet = new Set(participant_ids.map(function(id) { return String(id).trim(); }).filter(Boolean));
+  
+    var updatedCount = 0;
+    app.runInTransaction(function(txApp) {
+      var allParticipants = findRecordsByFilter(txApp, COLLECTIONS.participants, "", "", 1000, 0);
+      allParticipants.forEach(function(p) {
+        var pid = p.get("participant_id");
+        var shouldBeInDraw = idSet.has(pid);
+        var currentlyInDraw = isTruthy(p.get("in_draw"));
+        if (shouldBeInDraw !== currentlyInDraw) {
+          updateRecord(txApp, p, { in_draw: shouldBeInDraw });
+          updatedCount += 1;
+        }
+      });
+    });
+  
+    return success({ message: "Zaktualizowano liste losowania (" + idSet.size + " graczy zaznaczonych, " + updatedCount + " zmienionych)." });
+  }
+  
   var dispatchAction = function(app, action, payload) {
     switch (action) {
       case "register":
@@ -700,6 +727,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
         return getAdminData(app, payload && payload.pin);
       case "issue_reward":
         return issueReward(app, payload);
+      case "update_draw_participants":
+        return updateDrawParticipants(app, payload);
       default:
         return error(`Nieznana akcja API: ${action}`);
     }

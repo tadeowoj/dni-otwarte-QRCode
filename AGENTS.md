@@ -72,7 +72,9 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Dodano `pocketbase/pb_hooks/main.pb.js` z custom route `GET/POST /api/qr-action`, zachowujacy stary format odpowiedzi `status/data/message/error_code`.
 - Frontend `frontend/main.js` i `frontend/admin.js` zostal przepiety na `https://pocketbase.zsoiz-czyzew.pl/api/qr-action` i wysyla teraz normalny `Content-Type: application/json`.
 - `schema/database.md` i `DEPLOYMENT.md` zostaly przepisane pod PocketBase/SQLite.
-- Panel admina ma lokalna liste `Gracze bioracy udzial w losowaniu`: checkbox w tabeli `Dziennik Graczy` dodaje/usuwa uczestnika, lista jest zapisywana w `localStorage` pod kluczem `qr_admin_draw_participants` i nie wymaga zmian w PocketBase.
+- Panel admina ma liste `Gracze bioracy udzial w losowaniu` opartą o pole `in_draw` w kolekcji `participants`; checkbox w tabeli `Dziennik Graczy` modyfikuje stan lokalnie, a przycisk `Zapisz do bazy` wysyla zbiorczy update przez akcje `update_draw_participants` (wymaga admin PIN z sesji). Przy kazdym zaladowaniu danych admina stan checkboxow jest inicjalizowany z pola `in_draw` z API.
+- Dodano migracje `pocketbase/pb_migrations/20260412160000_add_in_draw.js` dodajaca pole `in_draw` (bool) do `participants`.
+- Backend `main.pb.js` ma nowa akcje `update_draw_participants` przyjmujaca `{ pin, participant_ids: [...] }`, ustawiajaca `in_draw=true` dla podanych ID i `in_draw=false` dla pozostalych, w transakcji.
 - Panel admina ma trwala sesje: PIN jest zapisywany w `localStorage` pod kluczem `qr_admin_session_pin` i przywracany po odswiezeniu strony; przycisk `Wyloguj` czysci sesje i wraca do ekranu logowania.
 
 # Ostatnia sesja (2026-04-11)

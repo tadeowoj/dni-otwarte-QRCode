@@ -20,6 +20,7 @@ Utworz dokladnie 7 kolekcji: `participants`, `teachers`, `stations`, `qr_codes`,
 | `is_complete` | bool | czy uczestnik ma komplet |
 | `completed_at` | date | data zdobycia kompletu |
 | `reward_issued` | bool | czy wydano nagrode |
+| `in_draw` | bool | czy uczestnik bierze udzial w losowaniu (default false) |
 | `status` | text | np. `active` |
 | `normalized_name` | text | wymagane, do blokady duplikatow |
 | `normalized_nickname` | text | wymagane, do blokady duplikatow |
