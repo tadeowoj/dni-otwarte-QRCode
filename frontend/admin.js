@@ -3,6 +3,8 @@ const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 
 let CURRENT_PIN = "";
 const DRAW_PARTICIPANTS = new Map();
+let ORIGINAL_DRAW_IDS = new Set();
+let adminAutoRefreshInterval = null;
 
 function saveSession(pin) {
   localStorage.setItem(SESSION_STORAGE_KEY, pin);
@@ -49,11 +51,21 @@ function createDrawParticipantSnapshot(participant) {
 
 function initDrawFromApiData(participants) {
   DRAW_PARTICIPANTS.clear();
+  ORIGINAL_DRAW_IDS.clear();
   participants.forEach((p) => {
     if (isTruthyValue(p.in_draw)) {
       DRAW_PARTICIPANTS.set(String(p.participant_id), createDrawParticipantSnapshot(p));
+      ORIGINAL_DRAW_IDS.add(String(p.participant_id));
     }
   });
+}
+
+function hasUnsavedDrawChanges() {
+  if (DRAW_PARTICIPANTS.size !== ORIGINAL_DRAW_IDS.size) return true;
+  for (let id of DRAW_PARTICIPANTS.keys()) {
+    if (!ORIGINAL_DRAW_IDS.has(id)) return true;
+  }
+  return false;
 }
 
 function renderDrawParticipants() {
@@ -138,6 +150,7 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
   renderData(res.data);
   showView('admin');
   showToast("Zalogowano pomyślnie!");
+  startAutoRefresh();
 });
 
 document.getElementById('btn-refresh').addEventListener('click', async () => {
@@ -163,8 +176,10 @@ function renderData(data) {
 
   // Inicjalizacja listy losowania z API
   const tbody = document.getElementById('table-body');
+  if (!hasUnsavedDrawChanges()) {
+    initDrawFromApiData(data.participants);
+  }
   tbody.innerHTML = '';
-  initDrawFromApiData(data.participants);
 
   data.participants.forEach(p => {
     const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
@@ -280,6 +295,7 @@ document.getElementById('btn-save-draw').addEventListener('click', async () => {
 
   if (res.status === "success") {
     showToast(res.data.message || "Lista losowania zapisana.");
+    ORIGINAL_DRAW_IDS = new Set(DRAW_PARTICIPANTS.keys());
   } else {
     showToast(res.message, true);
   }
@@ -292,7 +308,27 @@ document.getElementById('btn-logout').addEventListener('click', () => {
   showView('login');
   document.getElementById('admin-pin').value = '';
   showToast('Wylogowano.');
+  stopAutoRefresh();
 });
+
+function startAutoRefresh() {
+  if (adminAutoRefreshInterval) return;
+  adminAutoRefreshInterval = setInterval(async () => {
+    if (!CURRENT_PIN) return;
+    const res = await fetchAPI("get_admin_data", { pin: CURRENT_PIN });
+    if (res.status === "success") {
+      renderData(res.data);
+    }
+  }, 10000); // 10s
+}
+
+function stopAutoRefresh() {
+  if (adminAutoRefreshInterval) {
+    clearInterval(adminAutoRefreshInterval);
+    adminAutoRefreshInterval = null;
+  }
+}
+
 
 // --- Auto-login from saved session ---
 (async function restoreSession() {
@@ -304,6 +340,7 @@ document.getElementById('btn-logout').addEventListener('click', () => {
     CURRENT_PIN = savedPin;
     renderData(res.data);
     showView('admin');
+    startAutoRefresh();
   } else {
     clearSession();
   }

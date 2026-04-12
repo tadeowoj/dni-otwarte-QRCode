@@ -77,6 +77,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Backend `main.pb.js` ma nowa akcje `update_draw_participants` przyjmujaca `{ pin, participant_ids: [...] }`, ustawiajaca `in_draw=true` dla podanych ID i `in_draw=false` dla pozostalych, w transakcji.
 - Panel admina ma trwala sesje: PIN jest zapisywany w `localStorage` pod kluczem `qr_admin_session_pin` i przywracany po odswiezeniu strony; przycisk `Wyloguj` czysci sesje i wraca do ekranu logowania.
 - W panelu admina zmieniono wyszarzony przycisk "Brak akcji" w wierszu gracza na czerwony przycisk z ikoną kosza ("Usuń"); po jego kliknięciu i potwierdzeniu monitu, użytkownik i jego skany są usuwani z bazy (nowa akcja `delete_participant` w `main.pb.js`). W tym celu dodano też klasę `.btn-danger` do CSS.
+- Do widoku głównego admina dodano mechanizm automatycznego odświeżania tabeli graczy i statystyk (odpytywanie API co 10 sekund); mechanizm współpracuje z listą do losowania i wstrzymuje nadpisywanie zmian, jeżeli odczyta, że admin nie zapisał świeżo zaznaczonych graczy.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
