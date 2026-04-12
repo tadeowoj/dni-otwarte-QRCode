@@ -867,6 +867,41 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     padding: 140px 0 80px;
   }
 
+  .lottery-draw-cta-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+
+  .btn-draw-reward {
+    border: none;
+    border-radius: 14px;
+    padding: 20px 36px;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 3.2vw, 3.3rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #111827;
+    background: linear-gradient(120deg, #f97316, #fb923c 46%, #fdba74);
+    box-shadow: 0 22px 40px rgba(249, 115, 22, 0.45);
+    text-transform: uppercase;
+    cursor: pointer;
+    animation: drawCtaPulse 1.35s ease-in-out infinite;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+
+  .btn-draw-reward:hover,
+  .btn-draw-reward:focus-visible {
+    transform: translateY(-2px) scale(1.02);
+    filter: saturate(1.18);
+  }
+
+  .btn-draw-reward:disabled {
+    opacity: 0.76;
+    cursor: not-allowed;
+    animation-duration: 0.85s;
+  }
+
   .lottery-waiting,
   .finalists-area {
     text-align: center;
@@ -974,6 +1009,23 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     gap: 18px;
   }
 
+  .finalists-grid.finalists-chaos {
+    animation: none;
+  }
+
+  .finalists-grid.finalists-chaos .finalist-card {
+    animation: finalistsChaos 0.45s steps(2, end) infinite !important;
+    transform-origin: center;
+  }
+
+  .finalists-grid.finalists-chaos .finalist-card:nth-child(3n) {
+    animation-duration: 0.35s !important;
+  }
+
+  .finalists-grid.finalists-chaos .finalist-card:nth-child(4n) {
+    animation-duration: 0.52s !important;
+  }
+
   .finalist-card {
     position: relative;
     min-height: 166px;
@@ -1035,6 +1087,115 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     color: #475569;
     font-size: 1.02rem;
     font-weight: 700;
+  }
+
+  .winner-area {
+    position: relative;
+    margin-top: 22px;
+    text-align: center;
+    animation: winnerReveal 1.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .winner-fanfare {
+    position: absolute;
+    inset: -24px 0 auto;
+    height: 180px;
+    pointer-events: none;
+  }
+
+  .winner-fanfare span {
+    position: absolute;
+    width: 210px;
+    height: 16px;
+    border-radius: 999px;
+    opacity: 0.8;
+    filter: blur(0.4px);
+    animation: winnerBeam 1.8s ease-in-out infinite alternate;
+  }
+
+  .winner-fanfare span:nth-child(1) {
+    left: 18%;
+    top: 32px;
+    background: linear-gradient(90deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.8), rgba(249, 115, 22, 0.1));
+    transform: rotate(-18deg);
+  }
+
+  .winner-fanfare span:nth-child(2) {
+    right: 17%;
+    top: 22px;
+    background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.78), rgba(34, 197, 94, 0.1));
+    transform: rotate(17deg);
+    animation-delay: -0.35s;
+  }
+
+  .winner-fanfare span:nth-child(3) {
+    left: 24%;
+    top: 104px;
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.1), rgba(56, 189, 248, 0.8), rgba(56, 189, 248, 0.1));
+    transform: rotate(12deg);
+    animation-delay: -0.72s;
+  }
+
+  .winner-fanfare span:nth-child(4) {
+    right: 25%;
+    top: 116px;
+    background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.76), rgba(168, 85, 247, 0.1));
+    transform: rotate(-13deg);
+    animation-delay: -1.06s;
+  }
+
+  .winner-card {
+    position: relative;
+    overflow: hidden;
+    margin: 18px auto 0;
+    width: min(900px, 94vw);
+    border-radius: 14px;
+    border: 1px solid rgba(249, 115, 22, 0.46);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 247, 237, 0.95));
+    box-shadow: 0 26px 58px rgba(249, 115, 22, 0.22);
+    padding: 34px 28px;
+  }
+
+  .winner-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 22% 14%, rgba(249, 115, 22, 0.2), transparent 42%),
+      radial-gradient(circle at 80% 85%, rgba(34, 197, 94, 0.16), transparent 45%);
+    pointer-events: none;
+  }
+
+  .winner-card-name {
+    position: relative;
+    z-index: 1;
+    color: #111827;
+    font-family: var(--font-heading);
+    font-size: clamp(3rem, 6.3vw, 5.6rem);
+    font-weight: 800;
+    line-height: 0.98;
+    text-shadow: 0 0 18px rgba(249, 115, 22, 0.28);
+    overflow-wrap: anywhere;
+  }
+
+  .winner-card-nick {
+    position: relative;
+    z-index: 1;
+    margin-top: 18px;
+    color: #b45309;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .winner-card-school {
+    position: relative;
+    z-index: 1;
+    margin-top: 14px;
+    color: #334155;
+    font-size: clamp(1.2rem, 2vw, 1.8rem);
+    font-weight: 700;
+    overflow-wrap: anywhere;
   }
 
   .lottery-control-panel {
@@ -1115,6 +1276,30 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     to { transform: translate3d(0, calc(-50% - 9px), 0); }
   }
 
+  @keyframes drawCtaPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 22px 40px rgba(249, 115, 22, 0.45); }
+    50% { transform: scale(1.05); box-shadow: 0 26px 54px rgba(249, 115, 22, 0.62); }
+  }
+
+  @keyframes finalistsChaos {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    20% { transform: translate(-42px, 26px) rotate(-11deg) scale(1.05); }
+    40% { transform: translate(38px, -28px) rotate(12deg) scale(0.94); }
+    60% { transform: translate(-36px, -30px) rotate(7deg) scale(1.03); }
+    80% { transform: translate(45px, 30px) rotate(-9deg) scale(0.96); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  }
+
+  @keyframes winnerReveal {
+    from { opacity: 0; transform: translateY(24px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes winnerBeam {
+    from { opacity: 0.32; transform: translateY(0) scaleX(0.92); }
+    to { opacity: 0.86; transform: translateY(-6px) scaleX(1.06); }
+  }
+
   @media (max-width: 900px) {
     .lottery-body {
       overflow: auto;
@@ -1129,9 +1314,18 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
       padding-top: 130px;
     }
 
+    .btn-draw-reward {
+      width: min(640px, 95vw);
+      padding: 18px 20px;
+    }
+
     .lottery-waiting h1,
     .finalists-heading h1 {
       font-size: clamp(3.2rem, 13vw, 5.5rem);
+    }
+
+    .winner-card {
+      padding: 26px 18px;
     }
   }
 
@@ -1140,7 +1334,10 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     .lottery-orbit,
     .lottery-countdown span,
     .finalists-grid,
-    .finalist-card {
+    .finalist-card,
+    .winner-area,
+    .winner-fanfare span,
+    .btn-draw-reward {
       animation: none;
     }
 
@@ -1148,5 +1345,9 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
       overflow: auto;
       mask-image: none;
       -webkit-mask-image: none;
+    }
+
+    .finalists-grid.finalists-chaos .finalist-card {
+      animation: none !important;
     }
   }

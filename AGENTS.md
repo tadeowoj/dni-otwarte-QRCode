@@ -93,6 +93,12 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Dla malych list frontend automatycznie powiela karty do minimalnej wysokosci tracka, a dla wiekszych list czas petli skaluje sie lagodnie, zeby scroll pozostawal wolny.
 - `prefers-reduced-motion` dla `/losowanie/` wylacza autoplay scroll i animacje wejscia, zostawiajac statyczna liste.
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
+- W widoku `/losowanie/` dodano stale widoczny, pulsujacy przycisk `Rozdaj fanty!`, ktory uruchamia sekwencje losowania: 10 sekund chaosu kafelkow i potem reveal jednego zwyciezcy.
+- Po kliknieciu `Rozdaj fanty!` frontend blokuje wieloklik na czas sekwencji, uruchamia klase chaos dla kafelkow i po 10 sekundach pobiera zwyciezce z backendu.
+- Dodano nowy stan `winner` z fanfarami wizualnymi i duzym kafelkiem zwyciezcy (imie i nazwisko, nick, szkola), gdzie imie i nazwisko jest wizualnie wyroznione.
+- Backend PocketBase ma nowa akcje `draw_lottery_winner` (admin PIN), ktora transakcyjnie losuje z `in_draw=true`, ustawia `reward_issued=true` i `in_draw=false`, oraz zwraca dane zwyciezcy.
+- Akcja `get_lottery_data` zwraca teraz dodatkowo `participant_id` finalistow (bez breaking change dla istniejacego frontendu).
+- Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`; plik `pocketbase/pb_hooks/main.pb.js` przechodzi lokalny parse check.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -136,4 +142,6 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
 - Wykonać smoke test nowego widoku `/losowanie/`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.
 - Wykonac reczny smoke test nowej animacji `/losowanie/`: sekwencyjne wejscie kart, pionowy endless loop i brak restartu animacji przy niezmienionej liscie z API.
+- Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (akcja `draw_lottery_winner`) i zrestartowac instancje PocketBase.
+- Wykonac reczny smoke test flow `Rozdaj fanty!`: 10s chaos, reveal zwyciezcy, aktualizacja `reward_issued=true` i `in_draw=false`, brak ponownego losowania tej samej osoby.
 - Po każdej istotnej zmianie aktualizować ten plik (`AGENTS.md`) jako jedyne źródło kontekstu dla kolejnych sesji.

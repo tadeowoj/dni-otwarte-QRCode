@@ -734,6 +734,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
 
     const finalists = findRecordsByFilter(app, COLLECTIONS.participants, "in_draw = true", "nickname", 500, 0)
       .map((p) => ({
+        participant_id: p.get("participant_id"),
         nickname: p.get("nickname"),
         first_name_last_name: p.get("first_name_last_name"),
         school_name: p.get("school_name")
@@ -743,6 +744,41 @@ routerAdd("POST", "/api/qr-action", (e) => {
       finalists,
       count: finalists.length
     });
+  }
+
+  var drawLotteryWinner = function(app, payload) {
+    const safePayload = payload || {};
+    const pin = safePayload.pin;
+
+    if (!isAdminPinValid(app, pin)) return error("Odmowa dostepu - nieprawidlowy PIN administratora.");
+
+    var result;
+    app.runInTransaction(function(txApp) {
+      const candidates = findRecordsByFilter(txApp, COLLECTIONS.participants, "in_draw = true", "", 2000, 0);
+      if (!candidates || candidates.length === 0) {
+        result = error("Brak uczestnikow na liscie losowania.", "DRAW_POOL_EMPTY");
+        return;
+      }
+
+      const winnerIndex = Math.floor(Math.random() * candidates.length);
+      const winner = candidates[winnerIndex];
+
+      updateRecord(txApp, winner, {
+        reward_issued: true,
+        in_draw: false
+      });
+
+      result = success({
+        winner: {
+          participant_id: winner.get("participant_id"),
+          first_name_last_name: winner.get("first_name_last_name"),
+          nickname: winner.get("nickname"),
+          school_name: winner.get("school_name")
+        }
+      });
+    });
+
+    return result;
   }
   
   var dispatchAction = function(app, action, payload) {
@@ -777,6 +813,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
         return deleteParticipant(app, payload);
       case "get_lottery_data":
         return getLotteryData(app, payload);
+      case "draw_lottery_winner":
+        return drawLotteryWinner(app, payload);
       default:
         return error(`Nieznana akcja API: ${action}`);
     }

@@ -37,6 +37,10 @@
       </header>
 
       <div class="lottery-content">
+        <div class="lottery-draw-cta-wrap">
+          <button type="button" id="btn-draw-reward" class="btn-draw-reward">Rozdaj fanty!</button>
+        </div>
+
         <div id="waiting-state" class="lottery-waiting">
           <p class="lottery-kicker">Za chwilę wielki finał</p>
           <h1>Trwa ustalanie listy finalistów...</h1>
@@ -56,6 +60,17 @@
           <div id="finalists-viewport" class="finalists-viewport">
             <div id="finalists-grid" class="finalists-grid"></div>
           </div>
+        </div>
+
+        <div id="winner-state" class="winner-area hidden" aria-live="assertive">
+          <div class="winner-fanfare" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <p class="lottery-kicker">Laureat nagrody</p>
+          <div id="winner-card" class="winner-card"></div>
         </div>
       </div>
 
