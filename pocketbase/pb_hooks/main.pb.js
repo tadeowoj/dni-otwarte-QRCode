@@ -626,6 +626,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
   var getAdminData = function(app, pin) {
     if (!isAdminPinValid(app, pin)) return error("Nieprawidlowy kod PIN administratora.");
   
+    const required_codes_count = parseInt(getSetting(app, "required_codes_count"), 10) || 15;
+  
     const participants = findRecordsByFilter(app, COLLECTIONS.participants, "", "-codes_collected_count,-created_at", 1000, 0)
       .map(participantToObject)
       .sort((a, b) => {
@@ -650,9 +652,10 @@ routerAdd("POST", "/api/qr-action", (e) => {
       stations,
       stats: {
         total_participants: participants.length,
-        completed_participants: participants.filter((p) => isTruthy(p.is_complete)).length,
+        completed_participants: participants.filter(function(p) { return (Number(p.codes_collected_count) || 0) >= required_codes_count; }).length,
         total_stations: stations.length,
-        total_scans: scans.length
+        total_scans: scans.length,
+        required_codes_count: required_codes_count
       }
     });
   }
