@@ -946,11 +946,32 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     font-size: clamp(3.2rem, 5vw, 6rem);
   }
 
+  .finalists-viewport {
+    margin-top: 34px;
+    height: clamp(380px, 62vh, 760px);
+    overflow: hidden;
+    border-radius: 8px;
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 9%, #000 91%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 9%, #000 91%, transparent 100%);
+  }
+
   .finalists-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: finalistsLoop var(--lottery-scroll-duration, 50s) linear infinite;
+    will-change: transform;
+  }
+
+  .finalists-grid.is-static {
+    animation: none;
+    transform: none;
+  }
+
+  .finalists-track-group {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 18px;
-    margin-top: 34px;
   }
 
   .finalist-card {
@@ -964,6 +985,11 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     padding: 24px 24px 22px;
     text-align: left;
     animation: finalistEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--entry-delay, 0s);
+  }
+
+  .finalist-card-no-enter {
+    animation: none;
   }
 
   .finalist-card::after {
@@ -1084,6 +1110,11 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
+  @keyframes finalistsLoop {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, calc(-50% - 9px), 0); }
+  }
+
   @media (max-width: 900px) {
     .lottery-body {
       overflow: auto;
@@ -1108,7 +1139,14 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     .lottery-ribbons span,
     .lottery-orbit,
     .lottery-countdown span,
+    .finalists-grid,
     .finalist-card {
       animation: none;
+    }
+
+    .finalists-viewport {
+      overflow: auto;
+      mask-image: none;
+      -webkit-mask-image: none;
     }
   }
