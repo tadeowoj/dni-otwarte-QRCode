@@ -793,3 +793,8 @@ Następny krok mogę zrobić jako:
 - Panel nauczyciela blokuje przycisk generowania, gdy kod jest aktywny, i odpyta backend co 2 sekundy, zeby ukryc QR bez przeladowania po skutecznym skanie uczestnika.
 - Backend przy skanowaniu akceptuje tylko aktualny aktywny token nauczyciela; starsze nadmiarowe aktywne tokeny nie przyznaja punktu.
 - Widok panelu nauczyciela pokazuje tylko dane stanowiska, przycisk generowania i aktualny kod QR; link skanowania oraz historia aktywnych kodow zostaly usuniete z UI.
+
+## Aktualizacja 2026-04-12 - szkoly z arkusza
+- Lista szkol podstawowych jest zarzadzana w arkuszu `Szkoly` (`school_name`, `is_active`, `display_order`) zamiast w kodzie.
+- Backend udostepnia akcje `get_schools`, waliduje rejestracje tylko wzgledem aktywnych szkol z arkusza i nadal zwraca `INVALID_SCHOOL_NAME` dla wartosci spoza listy.
+- Frontend rejestracji pobiera dropdown szkol z API; jesli lista nie jest dostepna, wybor szkoly i rejestracja sa blokowane.

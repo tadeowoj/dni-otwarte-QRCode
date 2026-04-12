@@ -65,6 +65,9 @@ function doPost(e) {
       case "get_stations":
         result = API.getStations();
         break;
+      case "get_schools":
+        result = API.getSchools();
+        break;
       case "scan_code":
         result = API.scanCode(payload);
         break;

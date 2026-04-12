@@ -20,6 +20,7 @@ const STATE = {
   pendingScanToken: queryParams.get("qr_token"),
   pendingLegacyCode: queryParams.get("code"),
   pendingRegistration: null,
+  schoolsLoaded: false,
   teacherCodes: [],
   teacherPollTimer: null,
   teacherPollInFlight: false
@@ -104,6 +105,43 @@ async function fetchAPI(action, payload) {
   }
 }
 
+function setSchoolSelectState(options, disabled = false) {
+  const schoolSelect = document.getElementById("reg-school");
+  schoolSelect.innerHTML = "";
+
+  options.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item.value;
+    option.innerText = item.label;
+    option.disabled = Boolean(item.disabled);
+    option.selected = Boolean(item.selected);
+    schoolSelect.appendChild(option);
+  });
+
+  schoolSelect.disabled = disabled;
+}
+
+async function loadRegistrationSchools() {
+  if (STATE.schoolsLoaded) return true;
+
+  setSchoolSelectState([{ value: "", label: "Wczytywanie szkol...", disabled: true, selected: true }], true);
+  const response = await fetchAPI("get_schools", {});
+  const schools = response.data && Array.isArray(response.data.schools) ? response.data.schools : [];
+
+  if (response.status !== "success" || schools.length === 0) {
+    STATE.schoolsLoaded = false;
+    setSchoolSelectState([{ value: "", label: "Nie udalo sie pobrac listy szkol", disabled: true, selected: true }], true);
+    return false;
+  }
+
+  STATE.schoolsLoaded = true;
+  setSchoolSelectState([
+    { value: "", label: "Wybierz szkole", disabled: true, selected: true },
+    ...schools.map((school) => ({ value: school.school_name, label: school.school_name }))
+  ]);
+  return true;
+}
+
 function startUserSession(role, userId, nickname, extra = {}) {
   STATE.userRole = role;
   STATE.userId = userId;
@@ -139,7 +177,7 @@ function clearSessionStorage() {
   localStorage.removeItem("qr_teacher_station_name");
 }
 
-function logoutUser() {
+async function logoutUser() {
   const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
@@ -154,8 +192,12 @@ function logoutUser() {
   STATE.pendingScanToken = null;
 
   showRegisterForm();
+  const schoolsLoaded = await loadRegistrationSchools();
+  if (!schoolsLoaded) {
+    showToast("Nie udalo sie pobrac listy szkol. Sprobuj odswiezyc strone.", true);
+  }
   showView("register");
-  showToast("Wylogowano.");
+  if (schoolsLoaded) showToast("Wylogowano.");
 }
 
 // =========================================================================
@@ -169,6 +211,10 @@ async function initApp() {
 
   if (!STATE.userId) {
     showRegisterForm();
+    const schoolsLoaded = await loadRegistrationSchools();
+    if (!schoolsLoaded) {
+      showToast("Nie udalo sie pobrac listy szkol. Sprobuj odswiezyc strone.", true);
+    }
     if (STATE.pendingScanToken) {
       showToast("Aby zeskanowac kod, musisz sie najpierw zalogowac lub zarejestrowac.", true);
     }
@@ -199,6 +245,11 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
   const name = document.getElementById("reg-name").value.trim();
   const nick = document.getElementById("reg-nick").value.trim();
   const school = document.getElementById("reg-school").value.trim();
+
+  if (!STATE.schoolsLoaded) {
+    showToast("Lista szkol nie jest dostepna. Odswiez strone i sprobuj ponownie.", true);
+    return;
+  }
 
   if (!name || !nick || !school) {
     showToast("Uzupelnij wszystkie pola, w tym wybor szkoly.", true);

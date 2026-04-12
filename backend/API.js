@@ -2,25 +2,6 @@
  * API.js - Logika biznesowa i kontrolery (wg modulow projektu)
  */
 
-const ALLOWED_SCHOOL_NAMES = [
-  "SzkoĹ‚a Podstawowa im. Szarych SzeregĂłw w CzyĹĽewie",
-  "SzkoĹ‚a Podstawowa im. Ojca ĹšwiÄ™tego Jana PawĹ‚a II w Bogutach-Piankach",
-  "SzkoĹ‚a Podstawowa w Tymiankach-Buciach",
-  "SzkoĹ‚a Podstawowa im. Marii Konopnickiej w Nurze",
-  "SzkoĹ‚a Podstawowa im. KardynaĹ‚a Stefana WyszyĹ„skiego w Szulborzu Wielkim",
-  "SzkoĹ‚a Podstawowa w ZarÄ™bach KoĹ›cielnych",
-  "SzkoĹ‚a Podstawowa w Andrzejewie",
-  "SzkoĹ‚a Podstawowa w OĹ‚dakach-Polonii",
-  "SzkoĹ‚a Podstawowa im. Ĺšw. Jana PawĹ‚a II w Rosochatym-KoĹ›cielnym",
-  "SzkoĹ‚a Podstawowa w DÄ…browie Wielkiej",
-  "SzkoĹ‚a Podstawowa im. KardynaĹ‚a Stefana WyszyĹ„skiego w Szepietowie",
-  "SzkoĹ‚a Podstawowa w Wojnach-Krupach",
-  "SzkoĹ‚a Podstawowa im. Polskiej Organizacji Wojskowej w DÄ…brĂłwce KoĹ›cielnej",
-  "SzkoĹ‚a Podstawowa im. Komisji Edukacji Narodowej w Klukowie",
-  "SzkoĹ‚a Podstawowa w Wyszonkach KoĹ›cielnych",
-  "SzkoĹ‚a Podstawowa w Ĺuniewie MaĹ‚ym"
-];
-
 const DEFAULT_APP_BASE_URL = "https://qr.zsoiz-czyzew.pl/";
 const QR_TOKEN_LENGTH = 24;
 
@@ -59,9 +40,31 @@ const API = {
     return this.normalizeNickname(value).toLowerCase();
   },
 
+  isTruthy(value) {
+    return value === true || value === "TRUE" || value === "true" || value === 1 || value === "1";
+  },
+
+  getActiveSchools() {
+    return DB.getRowsAsObjects("Szkoly")
+      .map((school) => ({
+        school_name: this.normalizeNameOrSchool(school.school_name),
+        is_active: school.is_active,
+        display_order: parseInt(school.display_order, 10)
+      }))
+      .filter((school) => school.school_name && this.isTruthy(school.is_active))
+      .sort((a, b) => {
+        const orderA = Number.isFinite(a.display_order) ? a.display_order : Number.MAX_SAFE_INTEGER;
+        const orderB = Number.isFinite(b.display_order) ? b.display_order : Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.school_name.localeCompare(b.school_name);
+      })
+      .map((school) => ({ school_name: school.school_name }));
+  },
+
   getAllowedSchoolByComparableName(value) {
     const comparableValue = this.normalizeComparableNameOrSchool(value);
-    return ALLOWED_SCHOOL_NAMES.find((school) => this.normalizeComparableNameOrSchool(school) === comparableValue) || null;
+    const school = this.getActiveSchools().find((item) => this.normalizeComparableNameOrSchool(item.school_name) === comparableValue);
+    return school ? school.school_name : null;
   },
 
   isAdminPinValid(pin) {
@@ -76,11 +79,11 @@ const API = {
   },
 
   isTeacherActive(teacher) {
-    return teacher && (teacher.is_active === true || teacher.is_active === "TRUE" || teacher.is_active === "true" || teacher.is_active === 1 || teacher.is_active === "1");
+    return teacher && this.isTruthy(teacher.is_active);
   },
 
   isQrCodeActive(qrCode) {
-    return qrCode && (qrCode.is_active === true || qrCode.is_active === "TRUE" || qrCode.is_active === "true" || qrCode.is_active === 1 || qrCode.is_active === "1");
+    return qrCode && this.isTruthy(qrCode.is_active);
   },
 
   buildScanUrl(qrToken) {
@@ -419,6 +422,10 @@ const API = {
   getStations() {
     const stations = DB.getRowsAsObjects("Stanowiska");
     return this.success({ stations });
+  },
+
+  getSchools() {
+    return this.success({ schools: this.getActiveSchools() });
   },
 
   scanCode(payload) {

@@ -59,6 +59,8 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Flow QR nauczyciela zostal doprecyzowany: tylko jeden aktywny kod QR na nauczyciela, `generate_teacher_qr` zwraca istniejacy aktywny kod zamiast tworzyc kolejny, panel blokuje przycisk generowania i odpytuje backend co 2 sekundy, zeby ukryc zuzyty kod bez reloadu.
 - Produkcyjny deployment Apps Script zostal przepiety na wersje `@13` (`Single active teacher QR`); test POST `get_teacher_panel_data` z `teacher_id=TEST` zwrocil poprawny blad domenowy `Nie znaleziono konta nauczyciela.`.
 - Panel nauczyciela zostal uproszczony: widoczne sa tylko informacje o stanowisku, przycisk generowania i aktualny kod QR; usunieto link skanowania i liste ostatnich aktywnych kodow.
+- Lista szkol zostala przeniesiona do arkusza `Szkoly` (`school_name`, `is_active`, `display_order`); backend ma akcje `get_schools`, a frontend laduje dropdown szkol z API i blokuje rejestracje, jesli lista jest niedostepna.
+- Produkcyjny deployment Apps Script zostal przepiety na wersje `@14` (`Schools from sheet`); test POST `get_schools` zwrocil `status=success` i pusta liste, wiec arkusz `Szkoly` trzeba jeszcze fizycznie utworzyc/uzupelnic w Google Sheets.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -88,6 +90,7 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - W arkuszu `Uczestnicy` dodac fizycznie kolumne `pin` w naglowkach (zgodnie z `schema/database.md`).
 - W arkuszu `Nauczyciele` dodac fizycznie kolumne `station_code` i uzupelnic mapowanie `1 nauczyciel = 1 stanowisko`.
 - Utworzyc arkusz `KodyQR` z naglowkami zgodnymi z `schema/database.md`.
+- Utworzyc arkusz `Szkoly` z naglowkami `school_name`, `is_active`, `display_order` i wpisac 16 szkol startowych zgodnie z `schema/database.md`.
 - Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
 - Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR, widoczna historia kodow.
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
@@ -95,5 +98,5 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Sprawdzic publiczny deployment Apps Script po `clasp push` i opublikowac nowa wersje Web App (`@N`) pod produkcyjny URL.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
-- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@13`.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@14`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
