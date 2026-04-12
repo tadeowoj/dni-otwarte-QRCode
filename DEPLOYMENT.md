@@ -1,48 +1,73 @@
-# Instrukcja Wdrożenia (Google Apps Script)
+# Instrukcja wdrozenia (PocketBase)
 
-Przygotowaliśmy wszystkie pliki! Teraz uruchomimy nasz backend i połączymy go z dyskiem.
+Backend produkcyjny dziala w PocketBase pod adresem `https://pocketbase.zsoiz-czyzew.pl`, a frontend nadal jest statycznym buildem Vite publikowanym na GitHub Pages pod `https://qr.zsoiz-czyzew.pl`.
 
-## Opcja A (Skoro masz zainstalowanego Node.js - Rekomendowana)
+## Backend PocketBase
 
-Przy użyciu narzędzia `clasp` (CLI od Google) możemy przepchnąć kod prosto z konsoli do chmury.
+1. Wgraj katalog `pocketbase/pb_migrations` oraz `pocketbase/pb_hooks` na serwer, do katalogu instancji PocketBase.
+2. Nie wgrywaj ani nie commituj `pb_data`, backupow, bazy SQLite, hasel ani tokenow.
+3. Uruchom migracje w katalogu instancji:
 
-1. **Przeładuj swój terminal:** Koniecznie zrestartuj program terminalowy (lub VS Code), aby odświeżyć zmienne środowiskowe, dzięki czemu komenda `npm` będzie widoczna dla systemu.
-2. W nowym oknie terminala wpisz: `npm install` (zainstaluje to narzędzie `clasp` w folderze).
-3. Następnie wpisz: `npm run login`. Otworzy się przeglądarka z prośbą o zalogowanie na twoje konto Google (zaakceptuj wszystkie uprawnienia, w tym Apps Script).
-4. Przejdź do Google Drive, utwórz nowy **Pusty Arkusz Kalkulacyjny (Google Sheets)** i skonfiguruj mu nazwy arkuszy i kolumny zgodnie ze wzorem w pliku `schema/database.md`.
-5. Kiedy w Sheets przejdziesz do zakładki **Rozszerzenia -> Apps Script**, skopiuj **ID skryptu** (długi ciąg znaków) z paska adresu (lub z ustawień skryptu). Alternatywnie, by podlinkować to na czysto, w konsoli wpisz `npx clasp clone <ID_SKRYPTU> --rootDir ./backend` (co go podłączy, ale uwaga: to nadpisze pliki jeśli na serwerze są puste, lepiej użyć kroku niżej).
-6. Najlepiej wejdź w zakładkę Apps Script, a potem w terminalu wpisz `npx clasp create --type sheets --title "QR Contest Backend" --rootDir ./backend` - ale by to działało musisz najpierw wrzucić flagę w ustawieniach konta Google Apps Script (`Włączone API Apps Script`).
+```powershell
+.\pocketbase.exe migrate up
+```
 
-**W skrócie - jeśli to za dużo technikalii z CLASP, skorzystaj z Opcji B poniżej.**
+Na Linuxie/VPS komenda bedzie zwykle wygladala tak:
 
----
+```bash
+./pocketbase migrate up
+```
 
-## Opcja B (Klasyczne przekopiowanie - Banalnie proste dla MVP)
+4. W panelu PocketBase sprawdz, czy powstaly kolekcje `participants`, `teachers`, `stations`, `qr_codes`, `scans`, `schools`, `settings`.
+5. Sprawdz, czy `schools` ma 16 aktywnych rekordow, a `settings` zawiera `required_codes_count`, `event_name`, `event_active`, `completion_message`, `admin_pin`, `app_base_url`.
+6. Zmien startowy `admin_pin=1234` na docelowy PIN administratora.
+7. Dodaj recznie realne stanowiska w `stations` i nauczycieli w `teachers`, gdy lista bedzie gotowa.
 
-1. Wejdź na swój Google Drive. Utwórz nowy **Arkusz Kalkulacyjny Google**.
-2. Wklej precyzyjnie 5 nazw arkuszy i nagłówki tak jak opisano w `schema/database.md` (w tym nowy arkusz `Nauczyciele`). To będzie Twoja baza danych.
-3. W górnym menu Google Sheets wejdź w **Rozszerzenia -> Apps Script**.
-4. W otwartym edytorze kodu usuń domyślną treść z pliku `Kod.gs` (możesz też zmienić mu nazwę na `Code.gs`) i skopiuj całą zawartość z utworzonego u Ciebie lokalnie wpisu `backend/Code.js`.
-5. Użyj przycisku z plusem (`+`) -> **Skrypt**, i stwórz dwa nowe pliki:
-    - O nazwie: `Database` (i wklej całą zawartość z pliku `backend/Database.js`)
-    - O nazwie: `API` (i wklej całą zawartość z pliku `backend/API.js`)
-6. Gotowe. Kliknij **Uruchom** nad funkcją `INIT_SHEET_PERMISSIONS()`, aby poproszono Cię o autoryzację pierwszego dostępu, którą musisz zaakceptować.
-7. Aby stworzyć Publiczne API Webowe:
-    * Wybierz potężny niebieski guzik u góry po prawej stronie **Opublikuj / Wdróż** -> **Nowe Wdrożenie** (New Deployment).
-    * Typ wdrożenia: zębatka -> **Aplikacja internetowa** (Web App).
-    * Opis: (np. Wersja 1.0)
-    * Uruchom jako: **Moje konto (Twój e-mail)**.
-    * Kto ma dostęp (Who has access): **Wszyscy / Każdy (Anyone)**. (To kluczowe!)
-    * Wyślij! Skopiuj **Adres URL wdrożenia** (taki brzydki link zaczynający się od `script.google.com/macros/s/..../exec`). Ten link wprowadzisz później do ustawień środowiskowych lub wskażesz bezpośrednio mojej osobie przy tworzeniu Front-Endu!
+## API aplikacji
 
-Jak tylko zdobędziesz ten docelowy Adres URL, daj mi znać i wygeneruję nam FrontEnd (HTML/CSS) łączący się z Twoją bazą.
+Frontend uderza w custom route PocketBase:
 
----
+```text
+POST https://pocketbase.zsoiz-czyzew.pl/api/qr-action
+```
 
-## Aktualizacja wdrozenia - 2026-04-11 (QR nauczyciela)
+Body:
 
-- Wymagane arkusze: `Uczestnicy`, `Nauczyciele`, `Stanowiska`, `KodyQR`, `Skanowania`, `Ustawienia`.
-- W arkuszu `Nauczyciele` musi istniec kolumna `station_code` (relacja `1 nauczyciel = 1 stanowisko`).
-- Skanowanie uczestnika dziala po parametrze `qr_token` (link typu `...?qr_token=...`), nie po `code`.
-- W `Ustawienia` dodaj `app_base_url` (np. `https://qr.zsoiz-czyzew.pl/`), bo backend buduje z tego link QR.
-- Po zmianach backendu wykonuj `clasp push`, a potem publikuj nowa wersje Web App (`@N`) i aktualizuj URL API we frontendzie.
+```json
+{ "action": "get_schools", "payload": {} }
+```
+
+Odpowiedz zachowuje stary kontrakt:
+
+```json
+{ "status": "success", "data": {} }
+```
+
+albo:
+
+```json
+{ "status": "error", "message": "Opis bledu", "error_code": "KOD_BLEDU" }
+```
+
+## Frontend
+
+Po zmianach frontendowych wejdz do katalogu `frontend` i wykonaj:
+
+```powershell
+npm.cmd run build
+```
+
+Build powinien korzystac z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action` w `frontend/main.js` i `frontend/admin.js`.
+
+## Smoke test po wdrozeniu
+
+- `GET https://pocketbase.zsoiz-czyzew.pl/api/qr-action` zwraca status API.
+- `POST get_schools` zwraca liste 16 szkol.
+- `POST get_admin_data` z blednym PIN zwraca blad autoryzacji.
+- Rejestracja tworzy uczestnika, modal PIN zapisuje PIN, logowanie dziala.
+- Nauczyciel z przypisanym `station_code` moze wygenerowac jeden aktywny QR.
+- Skan `?qr_token=...` przyznaje punkt i dezaktywuje kod QR.
+
+## Awaryjnie
+
+Stary backend Apps Script mozna zostawic jako fallback tylko do czasu potwierdzenia smoke testow PocketBase. Nowe zmiany powinny isc juz przez PocketBase, bo SQLite przestalo byc planem, a zostalo bazka-bazka.

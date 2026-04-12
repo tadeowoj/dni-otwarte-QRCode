@@ -3,7 +3,7 @@
 // =========================================================================
 // KONFIGURACJA & ZMIENNE GLOBALNE
 // =========================================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
+const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
 const TEACHER_PANEL_POLL_INTERVAL_MS = 4500;
 
@@ -95,7 +95,7 @@ async function fetchAPI(action, payload) {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, payload })
     });
     return await response.json();

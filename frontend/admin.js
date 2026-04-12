@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
+const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 
 let CURRENT_PIN = "";
 
@@ -23,7 +23,7 @@ async function fetchAPI(action, payload) {
   try {
     const response = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, payload })
     });
     return await response.json();
@@ -61,7 +61,7 @@ document.getElementById('btn-refresh').addEventListener('click', async () => {
   const btn = document.getElementById('btn-refresh');
   btn.innerText = "Wczytywanie...";
   const res = await fetchAPI("get_admin_data", { pin: CURRENT_PIN });
-  btn.innerText = "Odśwież (Pobierz z Arkusza)";
+  btn.innerText = "Odśwież dane";
 
   if (res.status === "success") {
     renderData(res.data);

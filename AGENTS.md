@@ -20,8 +20,8 @@ Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgady
 
 # Kontekst projektu
 Calosc wymagan funkcjonalnych jest opisana w `PROJEKT.md`.
-Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend Google Apps Script + Google Sheets (`Uczestnicy`, `Nauczyciele`, `Stanowiska`, `KodyQR`, `Skanowania`, `Ustawienia`).
-Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Database.js` (warstwa arkusza).
+Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend PocketBase/SQLite pod `https://pocketbase.zsoiz-czyzew.pl` plus starszy backend Google Apps Script jako kontekst historyczny.
+Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w `pocketbase/pb_hooks/main.pb.js` i obsluguje kontrakt `POST /api/qr-action` z body `{ action, payload }`.
 
 # Stan na 2026-04-11
 - Frontend dziala jako build wielostronicowy (`index.html`, `admin.html`) i jest hostowany przez GitHub Pages (custom domain: `qr.zsoiz-czyzew.pl`).
@@ -66,6 +66,12 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`.
 - Wykonano `npx.cmd clasp push`, utworzono wersje Apps Script `@15` (`Admin participants ranking`) i przepieto produkcyjny deployment tym samym `deploymentId`.
 - Smoke test POST `get_admin_data` na produkcyjnym URL z testowym PIN zwrocil poprawny blad autoryzacji `Nieprawidlowy kod PIN administratora.`, wiec endpoint odpowiada po wdrozeniu `@15`; sortowanie realnej tabeli trzeba potwierdzic aktualnym PIN admina.
+- Rozpoczeto migracje z Google Sheets/Apps Script na PocketBase/SQLite pod `https://pocketbase.zsoiz-czyzew.pl`.
+- Dodano `pocketbase/pb_migrations/20260412150000_init_qr_schema.js` tworzacy kolekcje `participants`, `teachers`, `stations`, `qr_codes`, `scans`, `schools`, `settings`.
+- Dodano `pocketbase/pb_migrations/20260412150100_seed_initial_data.js` seedujacy 16 szkol i ustawienia startowe (`admin_pin=1234`, do zmiany po inicjalizacji).
+- Dodano `pocketbase/pb_hooks/main.pb.js` z custom route `GET/POST /api/qr-action`, zachowujacy stary format odpowiedzi `status/data/message/error_code`.
+- Frontend `frontend/main.js` i `frontend/admin.js` zostal przepiety na `https://pocketbase.zsoiz-czyzew.pl/api/qr-action` i wysyla teraz normalny `Content-Type: application/json`.
+- `schema/database.md` i `DEPLOYMENT.md` zostaly przepisane pod PocketBase/SQLite.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -87,21 +93,23 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Wykonano `clasp push` po zmianach backendu (API.js, Code.js, Database.js, appsscript.json) do powiazanego projektu Apps Script.
 
 # Operacyjne zasady wdrozeniowe
-- Gdy zmieniasz endpoint Apps Script, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
-- Po zmianach backendu wykonuj `clasp push` i pilnuj zgodnosci aktywnego Web App deploymentu z frontendem.
-- Produkcyjny frontend ma uzywac publicznego deploymentu wersjonowanego Apps Script (`@N`) z uprawnieniem `ANYONE_ANONYMOUS`, nie `@HEAD`.
+- Gdy zmieniasz endpoint API PocketBase, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
+- Po zmianach PocketBase wgrywaj `pocketbase/pb_migrations` i `pocketbase/pb_hooks` na VPS oraz wykonuj `pocketbase migrate up` na instancji produkcyjnej.
+- Nigdy nie commituj `pb_data`, backupow, plikow `.db`, hasel, tokenow ani danych logowania PocketBase.
+- Po inicjalizacji bazy zmien startowy `settings.admin_pin=1234` w panelu PocketBase.
+- Stary Apps Script zostaje tylko jako fallback historyczny; nowe zmiany backendu rob przez PocketBase.
 
 # Otwarte TODO
-- W arkuszu `Uczestnicy` dodac fizycznie kolumne `pin` w naglowkach (zgodnie z `schema/database.md`).
-- W arkuszu `Nauczyciele` dodac fizycznie kolumne `station_code` i uzupelnic mapowanie `1 nauczyciel = 1 stanowisko`.
-- Utworzyc arkusz `KodyQR` z naglowkami zgodnymi z `schema/database.md`.
-- Utworzyc arkusz `Szkoly` z naglowkami `school_name`, `is_active`, `display_order` i wpisac 16 szkol startowych zgodnie z `schema/database.md`.
+- Wgrac katalogi `pocketbase/pb_migrations` i `pocketbase/pb_hooks` na VPS PocketBase.
+- Uruchomic na VPS `pocketbase migrate up` dla instancji `https://pocketbase.zsoiz-czyzew.pl`.
+- Po migracji zmienic `settings.admin_pin` z `1234` na docelowy PIN administratora.
+- W PocketBase recznie dodac realne rekordy `stations` i `teachers` z mapowaniem `1 nauczyciel = 1 stanowisko`.
 - Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
-- Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR, widoczna historia kodow.
+- Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR i blokade jednego aktywnego kodu.
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
-- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@15`.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
