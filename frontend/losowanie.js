@@ -6,12 +6,16 @@ const MIN_LOOP_CARD_COUNT = 12;
 const BASE_SCROLL_DURATION_SECONDS = 45;
 const MAX_SCROLL_DURATION_SECONDS = 60;
 const DRAW_CHAOS_DURATION_MS = 10000;
+const DRAW_SOUND_SRC = "/losowanko.mp3";
 
 let CURRENT_PIN = "";
 let LAST_FINALISTS_SIGNATURE = "";
 let ACTIVE_FINALISTS = [];
 let DRAW_IN_PROGRESS = false;
 let pollInterval = null;
+const drawSound = new Audio(DRAW_SOUND_SRC);
+drawSound.preload = "auto";
+drawSound.loop = false;
 
 const states = {
   waiting: document.getElementById("waiting-state"),
@@ -74,6 +78,19 @@ async function fetchAPI(action, payload) {
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function playDrawSound() {
+  try {
+    drawSound.pause();
+    drawSound.currentTime = 0;
+    const playPromise = drawSound.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {});
+    }
+  } catch (_) {
+    // Ignorujemy błąd audio, żeby nie przerywać losowania.
+  }
 }
 
 function escapeHtml(value) {
@@ -280,6 +297,7 @@ async function runDrawSequence() {
   DRAW_IN_PROGRESS = true;
   setDrawButtonState();
   resetWinnerView();
+  playDrawSound();
 
   showState("finalists");
   renderFinalists(ACTIVE_FINALISTS, { showFinalistsState: true, force: true });

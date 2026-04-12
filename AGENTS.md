@@ -99,6 +99,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Backend PocketBase ma nowa akcje `draw_lottery_winner` (admin PIN), ktora transakcyjnie losuje z `in_draw=true`, ustawia `reward_issued=true` i `in_draw=false`, oraz zwraca dane zwyciezcy.
 - Akcja `get_lottery_data` zwraca teraz dodatkowo `participant_id` finalistow (bez breaking change dla istniejacego frontendu).
 - Po zmianie frontendu wykonano lokalny build w katalogu `frontend` przez `npm.cmd run build`; plik `pocketbase/pb_hooks/main.pb.js` przechodzi lokalny parse check.
+- Klikniecie przycisku `Rozdaj fanty!` odtwarza teraz dzwiek `/losowanko.mp3` (asset z `frontend/public/losowanko.mp3`) przy kazdej rundzie losowania, jednokrotnie i bez petli.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
