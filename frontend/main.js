@@ -5,7 +5,7 @@
 // =========================================================================
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
-const TEACHER_PANEL_POLL_INTERVAL_MS = 4500;
+const TEACHER_PANEL_POLL_INTERVAL_MS = 1500;
 
 const queryParams = new URLSearchParams(window.location.search);
 
