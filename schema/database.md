@@ -30,7 +30,7 @@ Uwagi: konta nauczycieli dodaje admin recznie, logowanie nauczyciela dziala prze
 |---|---|---|---|---|---|
 | `qr_id` | `qr_token` | `station_code` | `teacher_id` | `created_at` | `is_active` |
 
-Uwagi: `qr_token` musi byc unikalny, nowe kody QR sa dodatkowymi aktywnymi tokenami dla stanowiska.
+Uwagi: `qr_token` musi byc unikalny. Nowy kod QR jest aktywny do pierwszego skutecznego skanu przyznajacego punkt; wtedy `is_active` zmienia sie na `FALSE`. Skan duplikatu stanowiska przez tego samego uczestnika nie dezaktywuje kodu.
 
 ### Arkusz: `Skanowania`
 | A | B | C | D | E | F | G |

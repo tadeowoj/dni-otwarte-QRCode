@@ -385,6 +385,21 @@ function renderTeacherHistory(codes) {
   });
 }
 
+async function renderTeacherCurrentQr(code) {
+  const qrLink = document.getElementById("teacher-qr-link");
+
+  if (!code) {
+    qrLink.href = "#";
+    qrLink.innerText = "-";
+    await renderTeacherQr(null);
+    return;
+  }
+
+  qrLink.href = code.scan_url;
+  qrLink.innerText = code.scan_url;
+  await renderTeacherQr(code.scan_url);
+}
+
 async function loadTeacherPanel() {
   showView("loader");
 
@@ -412,19 +427,7 @@ async function loadTeacherPanel() {
   document.getElementById("teacher-station-name").innerText = teacher.station_name || "-";
   document.getElementById("teacher-station-code").innerText = teacher.station_code || "-";
 
-  const latest = codes[0] || null;
-  const qrLink = document.getElementById("teacher-qr-link");
-
-  if (latest) {
-    qrLink.href = latest.scan_url;
-    qrLink.innerText = latest.scan_url;
-    await renderTeacherQr(latest.scan_url);
-  } else {
-    qrLink.href = "#";
-    qrLink.innerText = "-";
-    await renderTeacherQr(null);
-  }
-
+  await renderTeacherCurrentQr(codes[0] || null);
   renderTeacherHistory(codes);
   showView("teacher");
 }
@@ -445,7 +448,15 @@ async function generateTeacherQr() {
   }
 
   showToast("Nowy kod QR wygenerowany.");
-  await loadTeacherPanel();
+
+  const newCode = {
+    ...response.data,
+    is_active: true
+  };
+
+  STATE.teacherCodes = [newCode, ...STATE.teacherCodes].slice(0, 10);
+  await renderTeacherCurrentQr(newCode);
+  renderTeacherHistory(STATE.teacherCodes);
 }
 
 // =========================================================================

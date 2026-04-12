@@ -784,6 +784,6 @@ Następny krok mogę zrobić jako:
 ## Aktualizacja 2026-04-11 - nauczyciel i dynamiczne QR
 - Relacja danych: 1 nauczyciel = 1 stanowisko (pole `station_code` w arkuszu `Nauczyciele`).
 - Nauczyciel po zalogowaniu do `index.html` widzi swoje stanowisko i moze wygenerowac nowy aktywny kod QR.
-- Kazde wygenerowanie dodaje nowy rekord w `KodyQR` i nie uniewaznia poprzednich aktywnych tokenow.
+- Kazde wygenerowanie dodaje nowy rekord w `KodyQR`; kod jest jednorazowy i po pierwszym skutecznym skanie przyznajacym punkt zostaje dezaktywowany (`is_active=FALSE`).
 - Skanowanie uczestnika dziala wylacznie na podstawie `qr_token` (`?qr_token=...`); stare `?code=...` jest nieobslugiwane.
-- Token QR mapuje sie do `station_code`, a zaliczenie i duplikaty nadal liczone sa per stanowisko.
+- Token QR mapuje sie do `station_code`, a zaliczenie i duplikaty nadal liczone sa per stanowisko; skan duplikatu nie zuzywa aktywnego kodu QR.

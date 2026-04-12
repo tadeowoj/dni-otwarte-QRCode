@@ -401,34 +401,47 @@ const API = {
 
     if (!participant_id || !qr_token) return this.error("Brakujace dane do skanowania.");
 
-    const participants = DB.getRowsAsObjects("Uczestnicy");
-    const participant = participants.find((p) => p.participant_id === participant_id);
-    if (!participant) return this.error("Uczestnik nie istnieje, zaloguj sie ponownie.");
-    if (participant.is_complete === true || participant.is_complete === "TRUE") {
-      return this.error("Masz juz zdobyty komplet! Trwa weryfikacja do nagrody.");
-    }
+    const lock = LockService.getScriptLock();
 
-    const qrCodes = DB.getRowsAsObjects("KodyQR");
-    const qrCodeRecord = qrCodes.find((row) => String(row.qr_token) === qr_token && (row.is_active === true || row.is_active === "TRUE"));
-    if (!qrCodeRecord) return this.error("Kod QR jest nieprawidlowy lub nieaktywny.", "INVALID_QR_TOKEN");
+    try {
+      lock.waitLock(10000);
 
-    const station_code = this.normalizeStationCode(qrCodeRecord.station_code);
-    if (!station_code) return this.error("Kod QR nie ma przypisanego stanowiska.", "QR_STATION_NOT_FOUND");
+      const participants = DB.getRowsAsObjects("Uczestnicy");
+      const participant = participants.find((p) => p.participant_id === participant_id);
+      if (!participant) return this.error("Uczestnik nie istnieje, zaloguj sie ponownie.");
+      if (participant.is_complete === true || participant.is_complete === "TRUE") {
+        return this.error("Masz juz zdobyty komplet! Trwa weryfikacja do nagrody.");
+      }
 
-    const stations = DB.getRowsAsObjects("Stanowiska");
-    const station = stations.find((s) => this.normalizeStationCode(s.station_code) === station_code);
-    if (!station) return this.error("Kod nieprawidlowy, to stanowisko nie istnieje.");
-    if (station.is_active !== true && station.is_active !== "TRUE") return this.error("Stanowisko jest obecnie wylaczone.");
+      const qrCodes = DB.getRowsAsObjects("KodyQR");
+      const qrCodeRecord = qrCodes.find((row) => String(row.qr_token) === qr_token && (row.is_active === true || row.is_active === "TRUE"));
+      if (!qrCodeRecord) return this.error("Kod QR jest nieprawidlowy lub nieaktywny.", "INVALID_QR_TOKEN");
 
-    const scans = DB.getRowsAsObjects("Skanowania");
-    const alreadyScanned = scans.find((s) => s.participant_id === participant_id && this.normalizeStationCode(s.station_code) === station_code);
+      const station_code = this.normalizeStationCode(qrCodeRecord.station_code);
+      if (!station_code) return this.error("Kod QR nie ma przypisanego stanowiska.", "QR_STATION_NOT_FOUND");
 
-    let scanResultStatus = "ok";
-    let message = "Zaliczono stanowisko: " + station.station_name;
+      const stations = DB.getRowsAsObjects("Stanowiska");
+      const station = stations.find((s) => this.normalizeStationCode(s.station_code) === station_code);
+      if (!station) return this.error("Kod nieprawidlowy, to stanowisko nie istnieje.");
+      if (station.is_active !== true && station.is_active !== "TRUE") return this.error("Stanowisko jest obecnie wylaczone.");
 
-    if (alreadyScanned) {
-      scanResultStatus = "duplicate";
-      message = "Uwaga: To stanowisko masz juz zaliczone!";
+      const scans = DB.getRowsAsObjects("Skanowania");
+      const alreadyScanned = scans.find((s) => s.participant_id === participant_id && this.normalizeStationCode(s.station_code) === station_code);
+
+      const message = "Zaliczono stanowisko: " + station.station_name;
+
+      if (alreadyScanned) {
+        DB.insertRow("Skanowania", {
+          scan_id: "S_" + new Date().getTime(),
+          timestamp: new Date().toISOString(),
+          participant_id,
+          nickname: participant.nickname,
+          station_code,
+          station_name: station.station_name,
+          scan_result: "duplicate"
+        });
+        return this.success({ message: "Uwaga: To stanowisko masz juz zaliczone!", station_code });
+      }
 
       DB.insertRow("Skanowania", {
         scan_id: "S_" + new Date().getTime(),
@@ -437,46 +450,43 @@ const API = {
         nickname: participant.nickname,
         station_code,
         station_name: station.station_name,
-        scan_result: scanResultStatus
+        scan_result: "ok"
       });
-      return this.success({ message, station_code });
+
+      let newCount = parseInt(participant.codes_collected_count, 10) || 0;
+      newCount += 1;
+
+      const required_count = parseInt(DB.getSetting("required_codes_count"), 10) || 15;
+      const isComplete = newCount >= required_count;
+
+      DB.updateRow("Uczestnicy", participant._rowIndex, {
+        codes_collected_count: newCount,
+        is_complete: isComplete,
+        completed_at: isComplete ? new Date().toISOString() : ""
+      });
+
+      DB.updateRow("KodyQR", qrCodeRecord._rowIndex, {
+        is_active: false
+      });
+
+      let extraMessage = "";
+      if (isComplete) {
+        extraMessage = DB.getSetting("completion_message") || "MAMY KOMPLET!";
+      }
+
+      return this.success({
+        message,
+        extra_message: extraMessage,
+        is_complete: isComplete,
+        codes_collected_count: newCount,
+        required_codes_count: required_count,
+        station_code
+      });
+    } catch (error) {
+      return this.error("Skanowanie chwilowo niedostepne. Sprobuj ponownie.");
+    } finally {
+      if (lock.hasLock()) lock.releaseLock();
     }
-
-    DB.insertRow("Skanowania", {
-      scan_id: "S_" + new Date().getTime(),
-      timestamp: new Date().toISOString(),
-      participant_id,
-      nickname: participant.nickname,
-      station_code,
-      station_name: station.station_name,
-      scan_result: "ok"
-    });
-
-    let newCount = parseInt(participant.codes_collected_count, 10) || 0;
-    newCount += 1;
-
-    const required_count = parseInt(DB.getSetting("required_codes_count"), 10) || 15;
-    const isComplete = newCount >= required_count;
-
-    DB.updateRow("Uczestnicy", participant._rowIndex, {
-      codes_collected_count: newCount,
-      is_complete: isComplete,
-      completed_at: isComplete ? new Date().toISOString() : ""
-    });
-
-    let extraMessage = "";
-    if (isComplete) {
-      extraMessage = DB.getSetting("completion_message") || "MAMY KOMPLET!";
-    }
-
-    return this.success({
-      message,
-      extra_message: extraMessage,
-      is_complete: isComplete,
-      codes_collected_count: newCount,
-      required_codes_count: required_count,
-      station_code
-    });
   },
 
   getStats() {

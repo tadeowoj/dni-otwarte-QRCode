@@ -2,7 +2,7 @@
 Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgadywania.
 
 ## Zasady pracy
-- Po kazdym istotnym zadaniu aktualizuj `AGENT.md`: stan projektu, decyzje i otwarte TODO.
+- Po kazdym istotnym zadaniu aktualizuj `AGENTS.md`: stan projektu, decyzje i otwarte TODO.
 - Uzywaj konwencjonalnych commitow (`feat:`, `fix:`, `docs:`, `chore:`).
 - Nie dodawaj w commitach informacji o agentach ani wspolautorach-agentach.
 - Commit na `main` jest dozwolony w tym repo.
@@ -47,6 +47,16 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Endpoint `scan_code` przyjmuje teraz `qr_token` (stare `station_code` i parametr URL `code` nie sa obslugiwane).
 - Widok nauczyciela w `frontend/index.html` umozliwia generowanie nowego QR, podglad aktualnego kodu i historie ostatnich aktywnych tokenow.
 
+# Stan na 2026-04-12
+- Produkcyjny URL Apps Script uzywany przez frontend zostal przepiety z wersji `@10` na wersje `@11` (`Teacher panel data and QR actions`).
+- Test POST dla akcji `get_teacher_panel_data` na produkcyjnym URL nie zwraca juz `Nieznana akcja API`; dla testowego `teacher_id=TEST` zwraca poprawny blad domenowy `Nie znaleziono konta nauczyciela.`.
+- Wykonano `npx.cmd clasp deploy --deploymentId AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv --versionNumber 11 --description "Teacher panel data and QR actions"`.
+- Panel nauczyciela po kliknieciu `Wygeneruj nowy QR` aktualizuje teraz canvas QR, link skanowania i historie kodow bez przeladowywania calego widoku.
+- Po zmianie frontendu wykonano lokalny build `npm.cmd run build`.
+- Backend `scan_code` zuzywa teraz kod QR jednorazowo: po skutecznym przyznaniu punktu ustawia `KodyQR.is_active=false` w blokadzie `LockService`; skan duplikatu stanowiska nie dezaktywuje kodu.
+- Produkcyjny deployment Apps Script zostal przepiety na wersje `@12` (`One-time QR codes`) pod tym samym URL.
+- Test POST `scan_code` z testowymi danymi na produkcyjnym URL zwrocil poprawny blad domenowy `Uczestnik nie istnieje, zaloguj sie ponownie.`, czyli router produkcyjny przyjmuje akcje po wdrozeniu `@12`.
+
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
 - Dodano modal ustawiania PIN po udanej rejestracji z walidacja `^\d{4}$` i potwierdzeniem PIN.
@@ -82,5 +92,5 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Sprawdzic publiczny deployment Apps Script po `clasp push` i opublikowac nowa wersje Web App (`@N`) pod produkcyjny URL.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
-- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z nowego deploymentu Apps Script `@9`.
-- Po kazdej istotnej zmianie aktualizowac ten plik (`AGENT.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@12`.
+- Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.
