@@ -787,3 +787,8 @@ Następny krok mogę zrobić jako:
 - Kazde wygenerowanie dodaje nowy rekord w `KodyQR`; kod jest jednorazowy i po pierwszym skutecznym skanie przyznajacym punkt zostaje dezaktywowany (`is_active=FALSE`).
 - Skanowanie uczestnika dziala wylacznie na podstawie `qr_token` (`?qr_token=...`); stare `?code=...` jest nieobslugiwane.
 - Token QR mapuje sie do `station_code`, a zaliczenie i duplikaty nadal liczone sa per stanowisko; skan duplikatu nie zuzywa aktywnego kodu QR.
+
+## Aktualizacja 2026-04-12 - jeden aktywny QR nauczyciela
+- Nauczyciel moze miec tylko jeden aktywny kod QR naraz; ponowne generowanie przy aktywnym kodzie zwraca istniejacy token zamiast tworzyc kolejny.
+- Panel nauczyciela blokuje przycisk generowania, gdy kod jest aktywny, i odpyta backend co 2 sekundy, zeby ukryc QR bez przeladowania po skutecznym skanie uczestnika.
+- Backend przy skanowaniu akceptuje tylko aktualny aktywny token nauczyciela; starsze nadmiarowe aktywne tokeny nie przyznaja punktu.

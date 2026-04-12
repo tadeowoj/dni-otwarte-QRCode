@@ -5,6 +5,7 @@
 // =========================================================================
 const API_URL = "https://script.google.com/macros/s/AKfycbw8csjuObiG1iuIO1KAi1TKSVHOXQXAs2CMuWnIELGshCbuTBjf0-bA28ZbkUetINzv/exec";
 const PARTICIPANT_PIN_REGEX = /^\d{4}$/;
+const TEACHER_PANEL_POLL_INTERVAL_MS = 2000;
 
 const queryParams = new URLSearchParams(window.location.search);
 
@@ -19,7 +20,9 @@ const STATE = {
   pendingScanToken: queryParams.get("qr_token"),
   pendingLegacyCode: queryParams.get("code"),
   pendingRegistration: null,
-  teacherCodes: []
+  teacherCodes: [],
+  teacherPollTimer: null,
+  teacherPollInFlight: false
 };
 
 // =========================================================================
@@ -43,6 +46,7 @@ function hideAllViews() {
 }
 
 function showView(viewName) {
+  if (viewName !== "teacher") stopTeacherPanelPolling();
   hideAllViews();
   if (views[viewName]) views[viewName].classList.add("active");
 }
@@ -139,6 +143,7 @@ function logoutUser() {
   const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
+  stopTeacherPanelPolling();
   clearSessionStorage();
   STATE.userId = null;
   STATE.userRole = null;
@@ -386,18 +391,83 @@ function renderTeacherHistory(codes) {
 }
 
 async function renderTeacherCurrentQr(code) {
+  const qrPreview = document.querySelector(".teacher-qr-preview");
   const qrLink = document.getElementById("teacher-qr-link");
 
   if (!code) {
+    qrPreview.classList.add("is-empty");
     qrLink.href = "#";
     qrLink.innerText = "-";
     await renderTeacherQr(null);
     return;
   }
 
+  qrPreview.classList.remove("is-empty");
   qrLink.href = code.scan_url;
   qrLink.innerText = code.scan_url;
   await renderTeacherQr(code.scan_url);
+}
+
+function updateTeacherQrButton() {
+  const btn = document.getElementById("btn-generate-teacher-qr");
+  const activeCode = STATE.teacherCodes[0] || null;
+
+  btn.disabled = Boolean(activeCode);
+  btn.innerText = activeCode ? "Kod aktywny - czeka na skan" : "Wygeneruj nowy QR";
+}
+
+async function applyTeacherPanelData(data, options = {}) {
+  const teacher = data.teacher;
+  const codes = data.qr_codes || [];
+  const previousActiveToken = STATE.teacherCodes[0] ? STATE.teacherCodes[0].qr_token : null;
+  const currentActiveToken = codes[0] ? codes[0].qr_token : null;
+
+  STATE.nickname = teacher.nickname;
+  STATE.teacherDisplayName = teacher.display_name;
+  STATE.teacherStationCode = teacher.station_code;
+  STATE.teacherStationName = teacher.station_name;
+  STATE.teacherCodes = codes;
+
+  document.getElementById("teacher-nickname").innerText = teacher.display_name || teacher.nickname;
+  document.getElementById("teacher-station-name").innerText = teacher.station_name || "-";
+  document.getElementById("teacher-station-code").innerText = teacher.station_code || "-";
+
+  if (previousActiveToken !== currentActiveToken || options.forceRender) {
+    await renderTeacherCurrentQr(codes[0] || null);
+    renderTeacherHistory(codes);
+  }
+
+  updateTeacherQrButton();
+
+  if (options.notifyConsumed && previousActiveToken && !currentActiveToken) {
+    showToast("Kod zeskanowany. Mozesz wygenerowac nastepny.");
+  }
+}
+
+async function refreshTeacherPanelSilently() {
+  if (STATE.teacherPollInFlight || STATE.userRole !== "teacher" || !views.teacher.classList.contains("active")) return;
+
+  STATE.teacherPollInFlight = true;
+  try {
+    const response = await fetchAPI("get_teacher_panel_data", { teacher_id: STATE.userId });
+    if (response.status === "success" && STATE.userRole === "teacher" && views.teacher.classList.contains("active")) {
+      await applyTeacherPanelData(response.data, { notifyConsumed: true });
+    }
+  } finally {
+    STATE.teacherPollInFlight = false;
+  }
+}
+
+function startTeacherPanelPolling() {
+  stopTeacherPanelPolling();
+  STATE.teacherPollTimer = window.setInterval(refreshTeacherPanelSilently, TEACHER_PANEL_POLL_INTERVAL_MS);
+}
+
+function stopTeacherPanelPolling() {
+  if (!STATE.teacherPollTimer) return;
+  window.clearInterval(STATE.teacherPollTimer);
+  STATE.teacherPollTimer = null;
+  STATE.teacherPollInFlight = false;
 }
 
 async function loadTeacherPanel() {
@@ -414,49 +484,45 @@ async function loadTeacherPanel() {
     return;
   }
 
-  const teacher = response.data.teacher;
-  const codes = response.data.qr_codes || [];
-
-  STATE.nickname = teacher.nickname;
-  STATE.teacherDisplayName = teacher.display_name;
-  STATE.teacherStationCode = teacher.station_code;
-  STATE.teacherStationName = teacher.station_name;
-  STATE.teacherCodes = codes;
-
-  document.getElementById("teacher-nickname").innerText = teacher.display_name || teacher.nickname;
-  document.getElementById("teacher-station-name").innerText = teacher.station_name || "-";
-  document.getElementById("teacher-station-code").innerText = teacher.station_code || "-";
-
-  await renderTeacherCurrentQr(codes[0] || null);
-  renderTeacherHistory(codes);
+  await applyTeacherPanelData(response.data, { forceRender: true });
   showView("teacher");
+  startTeacherPanelPolling();
 }
 
 async function generateTeacherQr() {
   const btn = document.getElementById("btn-generate-teacher-qr");
+  if (STATE.teacherCodes[0]) {
+    showToast("Ten kod jest jeszcze aktywny. Poczekaj na skan.");
+    return;
+  }
+
   btn.disabled = true;
   btn.innerText = "Generowanie...";
 
   const response = await fetchAPI("generate_teacher_qr", { teacher_id: STATE.userId });
 
-  btn.disabled = false;
-  btn.innerText = "Wygeneruj nowy QR";
-
   if (response.status === "error") {
+    updateTeacherQrButton();
     showToast(response.message || "Nie udalo sie wygenerowac kodu QR.", true);
     return;
   }
 
-  showToast("Nowy kod QR wygenerowany.");
+  showToast(response.data.reused_existing ? "Masz juz aktywny kod QR." : "Nowy kod QR wygenerowany.");
 
   const newCode = {
     ...response.data,
     is_active: true
   };
 
-  STATE.teacherCodes = [newCode, ...STATE.teacherCodes].slice(0, 10);
-  await renderTeacherCurrentQr(newCode);
-  renderTeacherHistory(STATE.teacherCodes);
+  await applyTeacherPanelData({
+    teacher: {
+      nickname: STATE.nickname,
+      display_name: STATE.teacherDisplayName,
+      station_code: STATE.teacherStationCode,
+      station_name: STATE.teacherStationName
+    },
+    qr_codes: [newCode]
+  }, { forceRender: true });
 }
 
 // =========================================================================

@@ -56,6 +56,8 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Backend `scan_code` zuzywa teraz kod QR jednorazowo: po skutecznym przyznaniu punktu ustawia `KodyQR.is_active=false` w blokadzie `LockService`; skan duplikatu stanowiska nie dezaktywuje kodu.
 - Produkcyjny deployment Apps Script zostal przepiety na wersje `@12` (`One-time QR codes`) pod tym samym URL.
 - Test POST `scan_code` z testowymi danymi na produkcyjnym URL zwrocil poprawny blad domenowy `Uczestnik nie istnieje, zaloguj sie ponownie.`, czyli router produkcyjny przyjmuje akcje po wdrozeniu `@12`.
+- Flow QR nauczyciela zostal doprecyzowany: tylko jeden aktywny kod QR na nauczyciela, `generate_teacher_qr` zwraca istniejacy aktywny kod zamiast tworzyc kolejny, panel blokuje przycisk generowania i odpytuje backend co 2 sekundy, zeby ukryc zuzyty kod bez reloadu.
+- Produkcyjny deployment Apps Script zostal przepiety na wersje `@13` (`Single active teacher QR`); test POST `get_teacher_panel_data` z `teacher_id=TEST` zwrocil poprawny blad domenowy `Nie znaleziono konta nauczyciela.`.
 
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
@@ -92,5 +94,5 @@ Backend jest podzielony modulowo: `Code.js` (router), `API.js` (logika), `Databa
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Sprawdzic publiczny deployment Apps Script po `clasp push` i opublikowac nowa wersje Web App (`@N`) pod produkcyjny URL.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
-- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@12`.
+- Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z deploymentu Apps Script `@13`.
 - Po kazdej istotnej zmianie aktualizowac ten plik (`AGENTS.md`) jako jedyne zrodlo kontekstu dla kolejnych sesji.

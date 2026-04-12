@@ -79,6 +79,10 @@ const API = {
     return teacher && (teacher.is_active === true || teacher.is_active === "TRUE" || teacher.is_active === "true" || teacher.is_active === 1 || teacher.is_active === "1");
   },
 
+  isQrCodeActive(qrCode) {
+    return qrCode && (qrCode.is_active === true || qrCode.is_active === "TRUE" || qrCode.is_active === "true" || qrCode.is_active === 1 || qrCode.is_active === "1");
+  },
+
   buildScanUrl(qrToken) {
     const baseUrl = String(DB.getSetting("app_base_url") || DEFAULT_APP_BASE_URL).trim();
     const safeBase = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
@@ -287,9 +291,9 @@ const API = {
     if (!station) return this.error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
 
     const qrCodes = DB.getRowsAsObjects("KodyQR")
-      .filter((row) => String(row.teacher_id) === teacher_id && (row.is_active === true || row.is_active === "TRUE"))
+      .filter((row) => String(row.teacher_id) === teacher_id && this.isQrCodeActive(row))
       .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-      .slice(0, 10)
+      .slice(0, 1)
       .map((row) => ({
         qr_id: row.qr_id,
         qr_token: row.qr_token,
@@ -339,6 +343,27 @@ const API = {
       let qrToken = "";
       let attempts = 0;
       const existingCodes = DB.getRowsAsObjects("KodyQR");
+      const activeTeacherCodes = existingCodes
+        .filter((item) => String(item.teacher_id) === teacher_id && this.isQrCodeActive(item))
+        .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+      const activeTeacherCode = activeTeacherCodes[0];
+
+      if (activeTeacherCode) {
+        activeTeacherCodes.slice(1).forEach((oldCode) => {
+          DB.updateRow("KodyQR", oldCode._rowIndex, { is_active: false });
+        });
+
+        return this.success({
+          qr_id: activeTeacherCode.qr_id,
+          qr_token: activeTeacherCode.qr_token,
+          station_code: activeTeacherCode.station_code,
+          station_name: station.station_name,
+          created_at: activeTeacherCode.created_at,
+          is_active: activeTeacherCode.is_active,
+          scan_url: this.buildScanUrl(activeTeacherCode.qr_token),
+          reused_existing: true
+        });
+      }
 
       do {
         qrToken = this.generateRandomToken();
@@ -367,7 +392,9 @@ const API = {
         station_code: station.station_code,
         station_name: station.station_name,
         created_at: createdAt,
-        scan_url: this.buildScanUrl(qrToken)
+        is_active: true,
+        scan_url: this.buildScanUrl(qrToken),
+        reused_existing: false
       });
     } catch (error) {
       return this.error("Generowanie kodu QR chwilowo niedostepne. Sprobuj ponownie.");
@@ -414,8 +441,15 @@ const API = {
       }
 
       const qrCodes = DB.getRowsAsObjects("KodyQR");
-      const qrCodeRecord = qrCodes.find((row) => String(row.qr_token) === qr_token && (row.is_active === true || row.is_active === "TRUE"));
+      const qrCodeRecord = qrCodes.find((row) => String(row.qr_token) === qr_token && this.isQrCodeActive(row));
       if (!qrCodeRecord) return this.error("Kod QR jest nieprawidlowy lub nieaktywny.", "INVALID_QR_TOKEN");
+
+      const activeTeacherCode = qrCodes
+        .filter((row) => String(row.teacher_id) === String(qrCodeRecord.teacher_id) && this.isQrCodeActive(row))
+        .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+      if (!activeTeacherCode || String(activeTeacherCode.qr_id) !== String(qrCodeRecord.qr_id)) {
+        return this.error("Kod QR jest nieprawidlowy lub nieaktywny.", "INVALID_QR_TOKEN");
+      }
 
       const station_code = this.normalizeStationCode(qrCodeRecord.station_code);
       if (!station_code) return this.error("Kod QR nie ma przypisanego stanowiska.", "QR_STATION_NOT_FOUND");

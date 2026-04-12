@@ -256,6 +256,12 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:hover,
 .btn-primary:focus-visible { box-shadow: 0 10px 24px rgba(109, 40, 217, 0.3); }
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
 .btn-icon { width: 20px; height: 20px; }
 .mt-4 { margin-top: 1.5rem; }
 
@@ -465,6 +471,10 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     gap: 8px;
     align-items: flex-start;
     margin-bottom: 1rem;
+  }
+
+  .teacher-qr-preview.is-empty {
+    display: none;
   }
 
   #teacher-qr-canvas {
