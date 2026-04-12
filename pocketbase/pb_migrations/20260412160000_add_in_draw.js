@@ -1,12 +1,9 @@
 migrate((app) => {
   const collection = app.findCollectionByNameOrId("participants");
-  collection.fields.add({ name: "in_draw", type: "bool" });
+  collection.fields.add(new BoolField({ name: "in_draw" }));
   app.save(collection);
 }, (app) => {
   const collection = app.findCollectionByNameOrId("participants");
-  const field = collection.fields.getByName("in_draw");
-  if (field) {
-    collection.fields.removeById(field.getId());
-    app.save(collection);
-  }
+  collection.fields.removeByName("in_draw");
+  app.save(collection);
 });
