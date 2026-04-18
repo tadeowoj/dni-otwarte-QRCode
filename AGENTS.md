@@ -115,6 +115,12 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Modal `Pomoc` renderuje teraz instrukcje z markdowna do sformatowanego HTML po stronie frontendu (naglowki, listy, tabela, checkboxy), zamiast wyswietlac surowy tekst.
 - W widoku admina usunieto przycisk `Wydaj Nagrode` z kolumny `Akcja`; pozostawiono tylko przycisk usuwania uczestnika.
 
+# Stan na 2026-04-18
+- W widoku nauczyciela (`view-teacher`) dodano sekcje hero z duzym, animowanym naglowkiem (`#teacher-hero-station-name`), ktory wyswietla nazwe stanowiska.
+- Naglowek ma zaawansowany styling: gradient text (`background-clip: text`), animacje przeplywu kolorow (`flowGradient`) oraz efekt unoszenia (`heroFloat`).
+- Frontend `frontend/main.js` aktualizuje tekst naglowka w funkcji `applyTeacherPanelData`.
+- Wykonano lokalny build frontendu przez `npm.cmd run build`.
+
 # Ostatnia sesja (2026-04-11)
 - Dodano frontendowy flow autoryzacji dla uczestnika: formularz rejestracji + formularz logowania `nick + PIN` na `index.html`.
 - Dodano modal ustawiania PIN po udanej rejestracji z walidacja `^\d{4}$` i potwierdzeniem PIN.
@@ -164,4 +170,5 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test nowej animacji `/losowanie/`: sekwencyjne wejscie kart, pionowy endless loop i brak restartu animacji przy niezmienionej liscie z API.
 - Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (akcja `draw_lottery_winner`) i zrestartowac instancje PocketBase.
 - Wykonac reczny smoke test flow `Rozdaj fanty!`: 10s chaos, reveal zwyciezcy, aktualizacja `reward_issued=true` i `in_draw=false`, brak ponownego losowania tej samej osoby.
+- Sprawdzic wizualnie nowy naglowek hero w widoku nauczyciela: czy jest wycentrowany, ma animowany gradient i poprawnie wyswietla nazwe stanowiska.
 - Po każdej istotnej zmianie aktualizować ten plik (`AGENTS.md`) jako jedyne źródło kontekstu dla kolejnych sesji.

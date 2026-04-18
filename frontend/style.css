@@ -601,6 +601,52 @@ h1, h2, h3 { font-family: var(--font-heading); font-weight: 700; }
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.4);
   }
+  
+  .teacher-hero {
+    margin-bottom: 2.5rem;
+    text-align: center;
+    perspective: 1000px;
+  }
+  
+  .teacher-hero-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+    background: linear-gradient(135deg, var(--clr-purple-light) 0%, #10b981 50%, var(--clr-purple-dark) 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 4px 12px rgba(109, 40, 217, 0.25));
+    animation: flowGradient 6s linear infinite, heroFloat 4s ease-in-out infinite;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    position: relative;
+  }
+  
+  .teacher-hero-title::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--clr-purple-light), var(--clr-neon-green));
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+  
+  @keyframes flowGradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+  }
+  
+  @keyframes heroFloat {
+    0%, 100% { transform: translateY(0) rotateX(0deg); }
+    50% { transform: translateY(-10px) rotateX(2deg); }
+  }
 
   /* =========================================================================
      ROZDZIAL 10: EKRAN AUTORYZACJI

@@ -1,4 +1,4 @@
-﻿import QRCode from "qrcode";
+import QRCode from "qrcode";
 
 // =========================================================================
 // KONFIGURACJA & ZMIENNE GLOBALNE
@@ -724,6 +724,7 @@ async function applyTeacherPanelData(data, options = {}) {
   document.getElementById("teacher-nickname").innerText = teacher.display_name || teacher.nickname;
   document.getElementById("teacher-station-name").innerText = teacher.station_name || "-";
   document.getElementById("teacher-station-code").innerText = teacher.station_code || "-";
+  document.getElementById("teacher-hero-station-name").innerText = teacher.station_name || "Brak nazwy";
 
   if (previousActiveToken !== currentActiveToken || options.forceRender) {
     await renderTeacherCurrentQr(codes[0] || null);
