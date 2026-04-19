@@ -48,6 +48,13 @@ function applyConfigToDom(config) {
           const source = logoElement.querySelector('source');
           if (source) {
             source.src = config.ui_logo_url;
+            if (url.endsWith('.mp4')) {
+              source.type = 'video/mp4';
+            } else if (url.endsWith('.webm')) {
+              source.type = 'video/webm';
+            } else {
+              source.removeAttribute('type');
+            }
             logoElement.load();
           }
         }
