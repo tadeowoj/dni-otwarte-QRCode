@@ -172,3 +172,12 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac reczny smoke test flow `Rozdaj fanty!`: 10s chaos, reveal zwyciezcy, aktualizacja `reward_issued=true` i `in_draw=false`, brak ponownego losowania tej samej osoby.
 - Sprawdzic wizualnie nowy naglowek hero w widoku nauczyciela: czy jest wycentrowany, ma animowany gradient i poprawnie wyswietla nazwe stanowiska.
 - Po każdej istotnej zmianie aktualizować ten plik (`AGENTS.md`) jako jedyne źródło kontekstu dla kolejnych sesji.
+
+# Stan na 2026-04-19
+- W widoku logowania/rejestracji powiększono dwukrotnie wideo z logo szkolnym (`clamp(100px, 12.5vw, 136px)` w `.hero-logo-video`) i dostosowano padding w nagłówku `.start-hero` by zachować układ.
+- Ustawiono logo (`.hero-logo-shell`) w widoku logowania na osobną warstwę nad tekstem powitalnym (`z-index: 20`), z szerokością zajmującą 33% przestrzeni. Tekst `.start-hero` przechodzi z powrotem na pełną szerokość (`width: 100%`) pod logo.
+- Usunięto całkowicie sztuczne tło wizualne z elementu zawierającego logo (`.hero-logo-shell` oraz samo `video`), pozbywając się również wewnętrznej ramki (padding), cieni oraz zaokrągleń kantów dając "czysty" obiekt.
+- Wykonano lokalny build frontendu przez `npm run build`.
+- Zaimplementowano panel zmiany wygl�du i logo w opcjach administratora (zapisywane z kluczami ui_ w tabeli ustawie� bazy).
+- G��wny plik main.pb.js posiada nowe w pe�ni funkcjonalne hooki get_public_settings oraz update_ui_settings.
+- Dodano globalny config.js, ktory automatycznie aplikuje modyfikacje w domenie :root oraz serwuje obraz.png /.webm jako hero-logo, a adminowi pozwolno na edycje hex dla akcent�w.

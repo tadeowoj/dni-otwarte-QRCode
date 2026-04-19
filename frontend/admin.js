@@ -1,3 +1,4 @@
+import "./config.js";
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 
@@ -312,3 +313,43 @@ function stopAutoRefresh() {
   }
 })();
 
+// --- UI Config Management ---
+(async function initUiConfig() {
+  const res = await fetchAPI("get_public_settings", {});
+  if (res.status === "success" && res.data) {
+    if (res.data.ui_logo_url) document.getElementById('cfg-logo-url').value = res.data.ui_logo_url;
+    if (res.data.ui_color_primary) document.getElementById('cfg-color-primary').value = res.data.ui_color_primary;
+    if (res.data.ui_color_secondary) document.getElementById('cfg-color-secondary').value = res.data.ui_color_secondary;
+  }
+})();
+
+const uiConfigForm = document.getElementById('ui-config-form');
+if (uiConfigForm) {
+  uiConfigForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!CURRENT_PIN) return;
+
+    const btn = document.getElementById('btn-save-ui-config');
+    const originalText = btn.innerText;
+    btn.innerText = "Zapisywanie...";
+    btn.disabled = true;
+
+    const payload = {
+      pin: CURRENT_PIN,
+      ui_logo_url: document.getElementById('cfg-logo-url').value.trim(),
+      ui_color_primary: document.getElementById('cfg-color-primary').value,
+      ui_color_secondary: document.getElementById('cfg-color-secondary').value
+    };
+
+    const res = await fetchAPI("update_ui_settings", payload);
+    
+    btn.innerText = originalText;
+    btn.disabled = false;
+
+    if (res.status === "success") {
+      showToast(res.message || "Zapisano konfigurację wyglądu.");
+    } else {
+      showToast(res.message || "Błąd zapisu ustawień.", true);
+    }
+  });
+}

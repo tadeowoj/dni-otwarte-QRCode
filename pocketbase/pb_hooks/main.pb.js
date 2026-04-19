@@ -806,7 +806,45 @@ routerAdd("POST", "/api/qr-action", (e) => {
 
     return result;
   }
-  
+
+  var getPublicSettings = function(app) {
+    const keys = ["ui_logo_url", "ui_color_primary", "ui_color_secondary"];
+    const settings = {};
+    keys.forEach((key) => {
+      settings[key] = getSetting(app, key) || "";
+    });
+    return success(settings);
+  }
+
+  var updateUiSettings = function(app, payload) {
+    const safePayload = payload || {};
+    const pin = safePayload.pin;
+
+    if (!isAdminPinValid(app, pin)) return error("Odmowa dostepu - nieprawidlowy PIN administratora.");
+
+    const keys = ["ui_logo_url", "ui_color_primary", "ui_color_secondary"];
+    let updatedCount = 0;
+
+    app.runInTransaction(function(txApp) {
+      keys.forEach((key) => {
+        if (typeof safePayload[key] !== "undefined") {
+          const val = String(safePayload[key]).trim();
+          let record = findFirstByData(txApp, COLLECTIONS.settings, "key", key);
+          if (!record) {
+            const collection = txApp.findCollectionByNameOrId(COLLECTIONS.settings);
+            record = new Record(collection);
+            record.set("key", key);
+          }
+          record.set("value", val);
+          txApp.save(record);
+          updatedCount++;
+        }
+      });
+    });
+
+    return success({ message: "Zaktualizowano ustawienia wygladu." });
+  }
+
   var dispatchAction = function(app, action, payload) {
     switch (action) {
       case "register":
@@ -841,6 +879,10 @@ routerAdd("POST", "/api/qr-action", (e) => {
         return getLotteryData(app, payload);
       case "draw_lottery_winner":
         return drawLotteryWinner(app, payload);
+      case "get_public_settings":
+        return getPublicSettings(app);
+      case "update_ui_settings":
+        return updateUiSettings(app, payload);
       default:
         return error(`Nieznana akcja API: ${action}`);
     }

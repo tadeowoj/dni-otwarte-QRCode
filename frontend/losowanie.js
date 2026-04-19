@@ -1,3 +1,4 @@
+import "./config.js";
 const API_URL = "https://pocketbase.zsoiz-czyzew.pl/api/qr-action";
 const LOTTERY_SESSION_KEY = "qr_lottery_admin_pin";
 
