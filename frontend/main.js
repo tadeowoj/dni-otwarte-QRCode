@@ -423,6 +423,14 @@ async function logoutUser() {
   const confirmLogout = window.confirm("Na pewno chcesz sie wylogowac?");
   if (!confirmLogout) return;
 
+  if (STATE.userRole === "teacher" && STATE.userId) {
+    try {
+      await fetchAPI("logout_teacher", { teacher_id: STATE.userId });
+    } catch (e) {
+      console.warn("Blad podczas wylogowywania nauczyciela na serwerze", e);
+    }
+  }
+
   stopTeacherPanelPolling();
   stopParticipantStatsPolling();
   clearSessionStorage();

@@ -334,6 +334,201 @@ routerAdd("POST", "/api/qr-action", (e) => {
       return success({
         message: "Zalogowano pomyslnie.",
         role: "participant",
+      "created_at",
+      "is_active"
+    ]);
+  }
+  
+  var findFirstByData = function(app, collection, field, value) {
+    try {
+      return app.findFirstRecordByData(collection, field, value);
+    } catch (_) {
+      return null;
+    }
+  }
+  
+  var findRecordsByFilter = function(app, collection, filter, sort, limit, offset, params) {
+    try {
+      if (!filter) {
+        const records = app.findAllRecords(collection);
+        return records.slice(offset || 0, limit ? (offset || 0) + limit : undefined);
+      }
+      return app.findRecordsByFilter(collection, filter, sort || "", limit || 200, offset || 0, params || {});
+    } catch (_) {
+      return [];
+    }
+  }
+  
+  var getSetting = function(app, key) {
+    const record = findFirstByData(app, COLLECTIONS.settings, "key", key);
+    return record ? String(record.get("value") == null ? "" : record.get("value")) : null;
+  }
+  
+  var getActiveSchools = function(app) {
+    return findRecordsByFilter(app, COLLECTIONS.schools, "", "display_order,school_name", 200, 0)
+      .map((record) => ({
+        school_name: normalizeNameOrSchool(record.get("school_name")),
+        is_active: record.get("is_active"),
+        display_order: Number(record.get("display_order") || 0)
+      }))
+      .filter((school) => school.school_name && isTruthy(school.is_active))
+      .sort((a, b) => {
+        const orderA = Number.isFinite(a.display_order) ? a.display_order : Number.MAX_SAFE_INTEGER;
+        const orderB = Number.isFinite(b.display_order) ? b.display_order : Number.MAX_SAFE_INTEGER;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.school_name.localeCompare(b.school_name);
+      })
+      .map((school) => ({ school_name: school.school_name }));
+  }
+  
+  var getAllowedSchoolByComparableName = function(app, value) {
+    const comparableValue = normalizeComparableNameOrSchool(value);
+    const school = getActiveSchools(app).find((item) => normalizeComparableNameOrSchool(item.school_name) === comparableValue);
+    return school ? school.school_name : null;
+  }
+  
+  var isAdminPinValid = function(app, pin) {
+    const enteredPin = normalizePin(pin);
+    const configuredPin = normalizePin(getSetting(app, "admin_pin"));
+    return Boolean(enteredPin && configuredPin && enteredPin === configuredPin);
+  }
+  
+  var buildScanUrl = function(app, qrToken) {
+    const baseUrl = String(getSetting(app, "app_base_url") || DEFAULT_APP_BASE_URL).trim();
+    const safeBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    return `${safeBase}?qr_token=${encodeURIComponent(qrToken)}`;
+  }
+  
+  var getStationByCode = function(app, stationCode) {
+    const code = normalizeStationCode(stationCode);
+    if (!code) return null;
+    return findFirstByData(app, COLLECTIONS.stations, "station_code", code);
+  }
+  
+  var createRecord = function(app, collectionName, data) {
+    const collection = app.findCollectionByNameOrId(collectionName);
+    const record = new Record(collection);
+    Object.keys(data).forEach((key) => record.set(key, data[key]));
+    app.save(record);
+    return record;
+  }
+  
+  var updateRecord = function(app, record, data) {
+    Object.keys(data).forEach((key) => record.set(key, data[key]));
+    app.save(record);
+    return record;
+  }
+  
+  var registerParticipant = function(app, payload) {
+    const safePayload = payload || {};
+    const first_name_last_name = normalizeNameOrSchool(safePayload.first_name_last_name);
+    const nickname = normalizeNickname(safePayload.nickname);
+    const school_name = normalizeNameOrSchool(safePayload.school_name);
+  
+    if (!nickname || !first_name_last_name || !school_name) {
+      return error("Wszystkie pola sa wymagane");
+    }
+  
+    const canonicalSchoolName = getAllowedSchoolByComparableName(app, school_name);
+    if (!canonicalSchoolName) {
+      return error("Nieprawidlowa szkola. Wybierz szkole z listy.", "INVALID_SCHOOL_NAME");
+    }
+  
+    const normalized_name = normalizeComparableNameOrSchool(first_name_last_name);
+    const normalized_nickname = normalizeComparableNickname(nickname);
+    const normalized_school = normalizeComparableNameOrSchool(canonicalSchoolName);
+  
+    let result;
+    app.runInTransaction((txApp) => {
+      const existing = findRecordsByFilter(
+        txApp,
+        COLLECTIONS.participants,
+        "normalized_name = {:name} && normalized_nickname = {:nickname} && normalized_school = {:school}",
+        "",
+        1,
+        0,
+        { name: normalized_name, nickname: normalized_nickname, school: normalized_school }
+      )[0];
+  
+      if (existing) {
+        result = error("Takie konto juz istnieje (imie i nazwisko + nick + szkola).", "DUPLICATE_PARTICIPANT");
+        return;
+      }
+  
+      const participant_id = `U_${randomSuffix()}`;
+      createRecord(txApp, COLLECTIONS.participants, {
+        participant_id,
+        first_name_last_name,
+        nickname,
+        pin: "",
+        school_name: canonicalSchoolName,
+        created_at: nowIso(),
+        codes_collected_count: 0,
+        is_complete: false,
+        reward_issued: false,
+        status: "active",
+        normalized_name,
+        normalized_nickname,
+        normalized_school
+      });
+  
+      result = success({ message: "Zarejestrowano pomyslnie", participant_id, nickname });
+    });
+  
+    return result;
+  }
+  
+  var setUserPin = function(app, payload) {
+    const safePayload = payload || {};
+    const participant_id = String(safePayload.participant_id == null ? "" : safePayload.participant_id).trim();
+    const pin = normalizePin(safePayload.pin);
+  
+    if (!participant_id) return error("Brak ID uczestnika.");
+    if (!isParticipantPinValid(pin)) return error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
+  
+    const participant = findFirstByData(app, COLLECTIONS.participants, "participant_id", participant_id);
+    if (!participant) return error("Nie znaleziono uczestnika.");
+  
+    updateRecord(app, participant, { pin });
+  
+    return success({
+      message: "PIN ustawiony poprawnie.",
+      participant_id: participant.get("participant_id"),
+      nickname: participant.get("nickname")
+    });
+  }
+  
+  var loginUser = function(app, payload) {
+    const safePayload = payload || {};
+    const nickname = normalizeNickname(safePayload.nickname);
+    const pin = normalizePin(safePayload.pin);
+  
+    if (!nickname || !pin) return error("Podaj nick i PIN.", "INVALID_CREDENTIALS");
+    if (!isParticipantPinValid(pin)) return error("PIN musi miec dokladnie 4 cyfry.", "INVALID_PIN_FORMAT");
+  
+    const comparableNickname = normalizeComparableNickname(nickname);
+    const participantMatches = findRecordsByFilter(app, COLLECTIONS.participants, "normalized_nickname = {:nickname}", "", 10, 0, { nickname: comparableNickname });
+    const teacherMatches = findRecordsByFilter(app, COLLECTIONS.teachers, "", "", 200, 0)
+      .filter((teacher) => normalizeComparableNickname(teacher.get("nickname")) === comparableNickname);
+  
+    if (participantMatches.length + teacherMatches.length === 0) {
+      return error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+    }
+  
+    if (participantMatches.length + teacherMatches.length > 1) {
+      return error("Ten nick wystepuje wiecej niz raz. Popros administratora o poprawke.", "DUPLICATE_NICKNAME");
+    }
+  
+    if (participantMatches.length === 1) {
+      const participant = participantMatches[0];
+      const storedPin = normalizePin(participant.get("pin"));
+  
+      if (!storedPin) return error("To konto nie ma jeszcze ustawionego PIN-u. Skontaktuj sie z administratorem.", "PIN_NOT_SET");
+      if (storedPin !== pin) return error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+  
+      return success({
+        message: "Zalogowano pomyslnie.",
+        role: "participant",
         participant_id: participant.get("participant_id"),
         nickname: participant.get("nickname")
       });
@@ -345,6 +540,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
     if (!storedPin) return error("To konto nauczyciela nie ma ustawionego PIN-u. Skontaktuj sie z administratorem.", "PIN_NOT_SET");
     if (!isTruthy(teacher.get("is_active"))) return error("Konto nauczyciela jest nieaktywne.", "TEACHER_INACTIVE");
     if (storedPin !== pin) return error("Nieprawidlowy nick lub PIN.", "INVALID_CREDENTIALS");
+    
+    if (isTruthy(teacher.get("is_logged"))) return error("To konto jest aktualnie uzywane na innym urzadzeniu. Wyloguj sie z poprzedniej sesji.", "ALREADY_LOGGED_IN");
   
     const stationCode = normalizeStationCode(teacher.get("station_code"));
     if (!stationCode) return error("To konto nauczyciela nie ma przypisanego stanowiska.", "TEACHER_STATION_NOT_ASSIGNED");
@@ -354,6 +551,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
   
     const station = getStationByCode(app, stationCode);
     if (!station) return error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
+    
+    updateRecord(app, teacher, { is_logged: true });
   
     return success({
       message: "Zalogowano pomyslnie.",
@@ -380,7 +579,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
     const teachersWithSameStation = findRecordsByFilter(app, COLLECTIONS.teachers, "station_code = {:stationCode}", "", 10, 0, { stationCode });
     if (teachersWithSameStation.length > 1) return error("To stanowisko jest przypisane do wielu nauczycieli.", "TEACHER_STATION_CONFLICT");
   
-    const station = getStationByCode(app, stationCode);
+    const station = getStationByCode(stationCode);
     if (!station) return error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
   
     const qr_codes = findRecordsByFilter(app, COLLECTIONS.qrCodes, "teacher_id = {:teacherId} && is_active = true", "-created_at", 1, 0, { teacherId: teacher_id })
@@ -845,6 +1044,18 @@ routerAdd("POST", "/api/qr-action", (e) => {
     return success({ message: "Zaktualizowano ustawienia wygladu." });
   }
 
+  var logoutTeacher = function(app, payload) {
+    const teacher_id = String((payload || {}).teacher_id == null ? "" : (payload || {}).teacher_id).trim();
+    if (!teacher_id) return error("Brak ID nauczyciela.");
+    
+    const teacher = findFirstByData(app, COLLECTIONS.teachers, "teacher_id", teacher_id);
+    if (teacher) {
+      updateRecord(app, teacher, { is_logged: false });
+    }
+    
+    return success({ message: "Wylogowano pomyslnie z systemu." });
+  }
+  
   var dispatchAction = function(app, action, payload) {
     switch (action) {
       case "register":
@@ -883,6 +1094,8 @@ routerAdd("POST", "/api/qr-action", (e) => {
         return getPublicSettings(app);
       case "update_ui_settings":
         return updateUiSettings(app, payload);
+      case "logout_teacher":
+        return logoutTeacher(app, payload);
       default:
         return error(`Nieznana akcja API: ${action}`);
     }
