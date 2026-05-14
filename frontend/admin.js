@@ -5,6 +5,8 @@ const SESSION_STORAGE_KEY = "qr_admin_session_pin";
 let CURRENT_PIN = "";
 const DRAW_PARTICIPANTS = new Map();
 let adminAutoRefreshInterval = null;
+let lastAdminData = null;
+let currentSort = { column: 'codes', desc: true };
 
 function saveSession(pin) {
   localStorage.setItem(SESSION_STORAGE_KEY, pin);
@@ -60,6 +62,133 @@ function initDrawFromApiData(participants) {
       DRAW_PARTICIPANTS.set(String(p.participant_id), createDrawParticipantSnapshot(p));
     }
   });
+}
+
+function sortParticipants(participants) {
+  return participants.sort((a, b) => {
+    let valA, valB;
+    switch(currentSort.column) {
+      case 'school_name':
+        valA = (a.school_name || '').toLowerCase();
+        valB = (b.school_name || '').toLowerCase();
+        break;
+      case 'status':
+        valA = (a.is_complete === true || a.is_complete === "TRUE") ? 1 : 0;
+        valB = (b.is_complete === true || b.is_complete === "TRUE") ? 1 : 0;
+        break;
+      case 'reward':
+        valA = (a.reward_issued === true || a.reward_issued === "TRUE") ? 1 : 0;
+        valB = (b.reward_issued === true || b.reward_issued === "TRUE") ? 1 : 0;
+        break;
+      case 'codes':
+      default:
+        valA = parseInt(a.codes_collected_count) || 0;
+        valB = parseInt(b.codes_collected_count) || 0;
+        break;
+    }
+    
+    if (valA < valB) return currentSort.desc ? 1 : -1;
+    if (valA > valB) return currentSort.desc ? -1 : 1;
+    return 0;
+  });
+}
+
+function updateSortHeaders() {
+  document.querySelectorAll('th.sortable').forEach(th => {
+    const col = th.getAttribute('data-sort');
+    th.classList.remove('active');
+    const icon = th.querySelector('.sort-icon');
+    if (icon) icon.innerText = '↕';
+    
+    if (col === currentSort.column) {
+      th.classList.add('active');
+      if (icon) icon.innerText = currentSort.desc ? '↓' : '↑';
+    }
+  });
+}
+
+function renderSchoolButtons(participants) {
+  const container = document.getElementById('school-buttons-container');
+  if (!container) return;
+
+  const schoolsMap = new Map();
+  participants.forEach(p => {
+    const school = p.school_name;
+    if (!school) return;
+    
+    if (!schoolsMap.has(school)) {
+      schoolsMap.set(school, { total: 0, eligible: 0, inDraw: 0 });
+    }
+    
+    const s = schoolsMap.get(school);
+    s.total++;
+    
+    const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
+    if (isComplete) {
+      s.eligible++;
+      if (DRAW_PARTICIPANTS.has(String(p.participant_id))) {
+        s.inDraw++;
+      }
+    }
+  });
+
+  const uniqueSchools = Array.from(schoolsMap.keys()).sort();
+
+  if (uniqueSchools.length === 0) {
+    container.innerHTML = '<p style="font-size:0.875rem; color:var(--clr-text-muted);">Brak danych o szkołach.</p>';
+    return;
+  }
+
+  container.innerHTML = uniqueSchools.map(school => {
+    const stats = schoolsMap.get(school);
+    const allInDraw = stats.eligible > 0 && stats.inDraw === stats.eligible;
+    
+    return `
+      <button class="school-btn ${allInDraw ? 'active' : ''}" data-school="${school}" ${stats.eligible === 0 ? 'disabled title="Brak uczestników z kompletem"' : ''}>
+        ${school}
+        <span class="badge" title="W losowaniu / Z kompletem">${stats.inDraw}/${stats.eligible}</span>
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.school-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const schoolName = btn.getAttribute('data-school');
+      if (!schoolName) return;
+      
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '...';
+      btn.disabled = true;
+
+      await toggleSchoolDraw(schoolName, participants);
+    });
+  });
+}
+
+async function toggleSchoolDraw(schoolName, participants) {
+  const eligible = participants.filter(p => p.school_name === schoolName && (p.is_complete === true || p.is_complete === "TRUE"));
+  if (eligible.length === 0) return;
+
+  const allInDraw = eligible.every(p => DRAW_PARTICIPANTS.has(String(p.participant_id)));
+  
+  eligible.forEach(p => {
+    const pid = String(p.participant_id);
+    if (allInDraw) {
+      DRAW_PARTICIPANTS.delete(pid);
+    } else {
+      DRAW_PARTICIPANTS.set(pid, createDrawParticipantSnapshot(p));
+    }
+  });
+
+  renderDrawParticipants();
+  
+  const res = await persistDrawParticipants();
+  if (res.status === "success") {
+    showToast(allInDraw ? `Usunięto z losowania: ${schoolName}` : `Dodano do losowania: ${schoolName}`);
+    if (lastAdminData) renderData(lastAdminData);
+  } else {
+    showToast("Błąd zapisu.", true);
+  }
 }
 
 function renderDrawParticipants() {
@@ -122,6 +251,8 @@ async function setDrawParticipant(participant, selected) {
   }
 
   renderDrawParticipants();
+  if (lastAdminData) renderSchoolButtons(lastAdminData.participants);
+
   const res = await persistDrawParticipants();
   if (res.status === "success") {
     return true;
@@ -130,6 +261,7 @@ async function setDrawParticipant(participant, selected) {
   DRAW_PARTICIPANTS.clear();
   previousDrawParticipants.forEach((snapshot, id) => DRAW_PARTICIPANTS.set(id, snapshot));
   renderDrawParticipants();
+  if (lastAdminData) renderSchoolButtons(lastAdminData.participants);
   showToast(res.message || "Nie udalo sie zapisac zmian losowania.", true);
   return false;
 }
@@ -170,11 +302,14 @@ document.getElementById('admin-login-form').addEventListener('submit', async (e)
   saveSession(pin);
   renderData(res.data);
   showView('admin');
+
   showToast("Zalogowano pomyślnie!");
   startAutoRefresh();
 });
 
 function renderData(data) {
+  lastAdminData = data;
+  
   // Statystyki
   document.getElementById('stat-participants').innerText = data.stats.total_participants;
   document.getElementById('stat-completed').innerText = data.stats.completed_participants;
@@ -182,11 +317,15 @@ function renderData(data) {
   document.getElementById('stat-stations').innerText = data.stats.total_stations;
 
   // Inicjalizacja listy losowania z API
-  const tbody = document.getElementById('table-body');
   initDrawFromApiData(data.participants);
+  renderSchoolButtons(data.participants);
+  
+  const tbody = document.getElementById('table-body');
   tbody.innerHTML = '';
 
-  data.participants.forEach(p => {
+  const sortedParticipants = sortParticipants([...data.participants]);
+
+  sortedParticipants.forEach(p => {
     const isComplete = (p.is_complete === true || p.is_complete === "TRUE");
     const isIssued = (p.reward_issued === true || p.reward_issued === "TRUE");
 
@@ -353,3 +492,20 @@ if (uiConfigForm) {
     }
   });
 }
+
+// --- Sorting Listeners ---
+document.querySelectorAll('th.sortable').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-sort');
+    if (currentSort.column === col) {
+      currentSort.desc = !currentSort.desc;
+    } else {
+      currentSort.column = col;
+      currentSort.desc = (col === 'codes' || col === 'status' || col === 'reward') ? true : false; 
+    }
+    updateSortHeaders();
+    if (lastAdminData) {
+      renderData(lastAdminData);
+    }
+  });
+});

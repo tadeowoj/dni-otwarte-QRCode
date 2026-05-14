@@ -1,4 +1,4 @@
-﻿# Instrukcje dla agentow
+# Instrukcje dla agentow
 Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgadywania.
 
 ## Zasady pracy
@@ -27,7 +27,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - **Architektura**: Zmigrowano z Google Sheets na PocketBase/SQLite. Aplikacja działa z jednym wspólnym endpointem API: `/api/qr-action` i globalnym konfiguratorem kolorów / logo `config.js`. Dodano build w Vite hostowany m.in. na Github Pages. Zmiany konfiguracji brandingu zapisywane są w PocketBase.
 - **Uczestnik**: Rejestracja z blokadą duplikatów i predefiniowaną listą 16 szkół. Flow logowania w oparciu o ustany na starcie kod PIN. Wbudowany ekran Dashboard ze statystykami odświeżanymi w czasie rzeczywistym i interaktywnymi "wyszarzającymi się" kafelkami dla odwiedzonych stacji.
 - **Nauczyciel**: Relacja 1 nauczyciel = 1 stacja, blokada wielokrotnego logowania (flaga `is_logged`). Dynamiczne odpytywanie API i ukrywanie jednorazowo zużytego kodu QR ze wsparciem zaawansowanego modalu z gradientowym, animowanym tytułem stanowiska.
-- **Admin i Losowanie**: Trwała sesja logowania. Możliwość ręcznego usunięcia uczestnika oraz aktualizacja puli biorących udział w losowaniu do finału (`in_draw`). Wyodrębniono wizualnie efektowny ekran na wielki ekran (`/losowanie/`) wsparty PINem administracyjnym w celach kontrolnych, z animacją zapętloną oraz dźwiękiem werbli po kliknięciu "Rozdaj fanty!". W widoku losowania logo nie jest skalowane (rozmiar 1:1).
+- **Admin i Losowanie**: Trwała sesja logowania. Możliwość ręcznego usunięcia uczestnika oraz aktualizacja puli biorących udział w losowaniu do finału (`in_draw`). Dodano możliwość sortowania tabeli graczy po szkole, kodach, statusie i wydanej nagrodzie, a także wdrożono panel grupowego wciągania/usuwania z losowania całych szkół. Wyodrębniono wizualnie efektowny ekran na wielki ekran (`/losowanie/`) wsparty PINem administracyjnym w celach kontrolnych, z animacją zapętloną oraz dźwiękiem werbli po kliknięciu "Rozdaj fanty!". W widoku losowania logo nie jest skalowane (rozmiar 1:1).
 
 # Operacyjne zasady wdrozeniowe
 - Gdy zmieniasz endpoint API PocketBase, aktualizuj URL rownoczesnie w `frontend/main.js` i `frontend/admin.js`.
@@ -46,13 +46,13 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
-- Potwierdzic sortowanie tabeli admina po kolumnie `Kody` z aktualnym PIN admina.
+- Potwierdzic sortowanie tabeli admina po kolumnach (Kody, Szkoła, Status, Nagroda) z aktualnym PIN admina.
 - Wykonac reczny smoke test dashboardu uczestnika: czy live statystyki (`Uczestnik na prowadzeniu ma punktów:`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.
 - Wgrac na VPS zaktualizowany `pocketbase/pb_hooks/main.pb.js` (poprawione `get_stats` z `leader_points` i `collecting_participants_count`) i zrestartowac instancje PocketBase.
 - Potwierdzic na produkcji przez `POST /api/qr-action` (`action=get_stats`), ze response zawiera pola `leader_points` oraz `collecting_participants_count`.
 - Wykonac reczny smoke test kafelkow stanowisk uczestnika: wieksze emoji sa stale per stanowisko, a zaliczone stanowiska przechodza w stan disabled (`Zaliczone`) po skanie.
 - Potwierdzic recznie fallback visited: po skanie kafelek stanowiska zmienia sie na disabled od razu po powrocie do dashboardu, nawet przy chwilowym braku pola `visited_station_codes` w odpowiedzi `get_profile`.
-- Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa ma od razu zapisywac `in_draw` bez przycisku zapisu.
+- Wykonac reczny smoke test listy losowania w panelu admina: zmiana checkboxa oraz kliknięcie przycisku szkoły poprawnie aktualizuje stan `in_draw` z natychmiastowym zapisem.
 - Po zmianach frontendu wykonac wdrozenie na GitHub Pages (build `npm run build` wykonany lokalnie).
 - Potwierdzic po publikacji GitHub Pages, ze frontend korzysta z `https://pocketbase.zsoiz-czyzew.pl/api/qr-action`.
 - Wykonać smoke test nowego widoku `/losowanie/`: logowanie PINem, stan oczekiwania, pojawianie się finalistów po zapisie w panelu admina.
