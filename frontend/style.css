@@ -1033,7 +1033,7 @@ h3 {
 
 @media (max-width: 520px) {
   .start-hero {
-    padding-right: 102px;
+    padding-right: 150px;
   }
 
   .start-hero-headline {
@@ -1046,7 +1046,7 @@ h3 {
   }
 
   .hero-logo-video {
-    height: 48px;
+    height: 150px;
   }
 
   .hero-logo-shell {
