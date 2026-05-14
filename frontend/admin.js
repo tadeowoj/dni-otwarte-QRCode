@@ -156,9 +156,9 @@ function renderSchoolButtons(participants) {
       const schoolName = btn.getAttribute('data-school');
       if (!schoolName) return;
       
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = '...';
       btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.innerHTML = `<span style="display:inline-block; animation: pulse 1s infinite;">⏳ Zapis...</span>`;
 
       await toggleSchoolDraw(schoolName, participants);
     });
@@ -175,19 +175,25 @@ async function toggleSchoolDraw(schoolName, participants) {
     const pid = String(p.participant_id);
     if (allInDraw) {
       DRAW_PARTICIPANTS.delete(pid);
+      p.in_draw = false;
     } else {
       DRAW_PARTICIPANTS.set(pid, createDrawParticipantSnapshot(p));
+      p.in_draw = true;
     }
   });
 
   renderDrawParticipants();
+  if (lastAdminData) renderSchoolButtons(lastAdminData.participants);
   
   const res = await persistDrawParticipants();
   if (res.status === "success") {
     showToast(allInDraw ? `Usunięto z losowania: ${schoolName}` : `Dodano do losowania: ${schoolName}`);
     if (lastAdminData) renderData(lastAdminData);
   } else {
+    eligible.forEach(p => p.in_draw = allInDraw); // revert
     showToast("Błąd zapisu.", true);
+    const refreshRes = await fetchAPI("get_admin_data", { pin: CURRENT_PIN });
+    if (refreshRes.status === "success") renderData(refreshRes.data);
   }
 }
 
@@ -246,8 +252,10 @@ async function setDrawParticipant(participant, selected) {
 
   if (selected) {
     DRAW_PARTICIPANTS.set(participantId, createDrawParticipantSnapshot(participant));
+    participant.in_draw = true;
   } else {
     DRAW_PARTICIPANTS.delete(participantId);
+    participant.in_draw = false;
   }
 
   renderDrawParticipants();
@@ -260,6 +268,7 @@ async function setDrawParticipant(participant, selected) {
 
   DRAW_PARTICIPANTS.clear();
   previousDrawParticipants.forEach((snapshot, id) => DRAW_PARTICIPANTS.set(id, snapshot));
+  participant.in_draw = !selected; // revert
   renderDrawParticipants();
   if (lastAdminData) renderSchoolButtons(lastAdminData.participants);
   showToast(res.message || "Nie udalo sie zapisac zmian losowania.", true);
