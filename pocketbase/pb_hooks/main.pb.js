@@ -384,7 +384,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
     const teachersWithSameStation = findRecordsByFilter(app, COLLECTIONS.teachers, "station_code = {:stationCode}", "", 10, 0, { stationCode });
     if (teachersWithSameStation.length > 1) return error("To stanowisko jest przypisane do wielu nauczycieli.", "TEACHER_STATION_CONFLICT");
   
-    const station = getStationByCode(stationCode);
+    const station = getStationByCode(app, stationCode);
     if (!station) return error("Przypisane stanowisko nauczyciela nie istnieje.", "TEACHER_STATION_NOT_FOUND");
   
     const qr_codes = findRecordsByFilter(app, COLLECTIONS.qrCodes, "teacher_id = {:teacherId} && is_active = true", "-created_at", 1, 0, { teacherId: teacher_id })
