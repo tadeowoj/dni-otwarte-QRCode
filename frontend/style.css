@@ -779,8 +779,38 @@ h3 {
 
 .teacher-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: flex-start;
   margin-bottom: 1rem;
+}
+
+.teacher-static-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--clr-text);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.teacher-static-toggle input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--clr-purple-dark);
+  cursor: pointer;
+}
+
+.teacher-static-toggle input[type="checkbox"]:disabled {
+  cursor: default;
+}
+
+.teacher-static-toggle input[type="checkbox"]:disabled + span {
+  color: var(--clr-text-muted);
 }
 
 .teacher-qr-preview {

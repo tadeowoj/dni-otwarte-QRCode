@@ -140,6 +140,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
       "station_code",
       "teacher_id",
       "created_at",
+      "is_static",
       "is_active"
     ]);
   }
@@ -408,6 +409,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
   
   var generateTeacherQr = function(app, payload) {
     const teacher_id = String((payload || {}).teacher_id == null ? "" : (payload || {}).teacher_id).trim();
+    const is_static = isTruthy((payload || {}).is_static);
     if (!teacher_id) return error("Brak ID nauczyciela.");
   
     let result;
@@ -474,6 +476,7 @@ routerAdd("POST", "/api/qr-action", (e) => {
         station_code: station.get("station_code"),
         teacher_id: teacher.get("teacher_id"),
         created_at: createdAt,
+        is_static,
         is_active: true
       });
       const item = qrCodeToObject(record);
@@ -616,7 +619,9 @@ routerAdd("POST", "/api/qr-action", (e) => {
       if (isComplete) participantUpdate.completed_at = nowIso();
       updateRecord(txApp, participant, participantUpdate);
   
-      updateRecord(txApp, qrCodeRecord, { is_active: false });
+      if (!isTruthy(qrCodeRecord.get("is_static"))) {
+        updateRecord(txApp, qrCodeRecord, { is_active: false });
+      }
   
       result = success({
         message: `Zaliczono stanowisko: ${station.get("station_name")}`,

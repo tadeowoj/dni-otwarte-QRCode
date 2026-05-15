@@ -794,6 +794,12 @@ Następny krok mogę zrobić jako:
 - Backend przy skanowaniu akceptuje tylko aktualny aktywny token nauczyciela; starsze nadmiarowe aktywne tokeny nie przyznaja punktu.
 - Widok panelu nauczyciela pokazuje tylko dane stanowiska, przycisk generowania i aktualny kod QR; link skanowania oraz historia aktywnych kodow zostaly usuniete z UI.
 
+## Aktualizacja 2026-05-15 - statyczny QR nauczyciela
+- W panelu nauczyciela dodano checkbox `Statyczny kod`, ktory zapisuje nowy kod QR z flaga `qr_codes.is_static=true`.
+- Jeden nauczyciel nadal moze miec tylko jeden aktywny kod QR naraz; jesli kod juz istnieje, ponowne generowanie zwraca aktywny kod bez zmiany trybu.
+- Kod jednorazowy po pierwszym skutecznym skanie dalej zmienia `is_active=false`, a kod statyczny pozostaje aktywny po skanach wielu uczestnikow.
+- Zaliczenia nadal sa liczone per stanowisko: ten sam uczestnik nie moze zdobyc punktu drugi raz z tego samego statycznego kodu.
+
 ## Aktualizacja 2026-04-12 - szkoly z arkusza
 - Lista szkol podstawowych jest zarzadzana w arkuszu `Szkoly` (`school_name`, `is_active`, `display_order`) zamiast w kodzie.
 - Backend udostepnia akcje `get_schools`, waliduje rejestracje tylko wzgledem aktywnych szkol z arkusza i nadal zwraca `INVALID_SCHOOL_NAME` dla wartosci spoza listy.

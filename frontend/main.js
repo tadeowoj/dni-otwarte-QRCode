@@ -716,12 +716,25 @@ async function renderTeacherCurrentQr(code) {
   await renderTeacherQr(code.scan_url);
 }
 
+function isStaticQrCode(code) {
+  return Boolean(code && (code.is_static === true || code.is_static === "true" || code.is_static === "TRUE"));
+}
+
 function updateTeacherQrButton() {
   const btn = document.getElementById("btn-generate-teacher-qr");
+  const staticToggle = document.getElementById("teacher-static-qr");
   const activeCode = STATE.teacherCodes[0] || null;
+  const activeCodeIsStatic = isStaticQrCode(activeCode);
 
   btn.disabled = Boolean(activeCode);
-  btn.innerText = activeCode ? "Kod aktywny - czeka na skan" : "Wygeneruj nowy QR";
+  btn.innerText = activeCode
+    ? (activeCodeIsStatic ? "Kod statyczny aktywny" : "Kod aktywny - czeka na skan")
+    : "Wygeneruj nowy QR";
+
+  if (staticToggle) {
+    staticToggle.disabled = Boolean(activeCode);
+    if (activeCode) staticToggle.checked = activeCodeIsStatic;
+  }
 }
 
 async function applyTeacherPanelData(data, options = {}) {
@@ -859,15 +872,20 @@ async function loadTeacherPanel() {
 
 async function generateTeacherQr() {
   const btn = document.getElementById("btn-generate-teacher-qr");
+  const staticToggle = document.getElementById("teacher-static-qr");
   if (STATE.teacherCodes[0]) {
     showToast("Ten kod jest jeszcze aktywny. Poczekaj na skan.");
     return;
   }
 
   btn.disabled = true;
+  if (staticToggle) staticToggle.disabled = true;
   btn.innerText = "Generowanie...";
 
-  const response = await fetchAPI("generate_teacher_qr", { teacher_id: STATE.userId });
+  const response = await fetchAPI("generate_teacher_qr", {
+    teacher_id: STATE.userId,
+    is_static: Boolean(staticToggle && staticToggle.checked)
+  });
 
   if (response.status === "error") {
     updateTeacherQrButton();
@@ -875,7 +893,10 @@ async function generateTeacherQr() {
     return;
   }
 
-  showToast(response.data.reused_existing ? "Masz juz aktywny kod QR." : "Nowy kod QR wygenerowany.");
+  const generatedStaticCode = isStaticQrCode(response.data);
+  showToast(response.data.reused_existing
+    ? "Masz juz aktywny kod QR."
+    : (generatedStaticCode ? "Statyczny kod QR wygenerowany." : "Nowy kod QR wygenerowany."));
 
   const newCode = {
     ...response.data,

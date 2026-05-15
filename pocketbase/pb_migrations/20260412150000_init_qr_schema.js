@@ -92,6 +92,7 @@ migrate((app) => {
       { name: "station_code", type: "text", required: true, max: 80 },
       { name: "teacher_id", type: "text", required: true, max: 80 },
       { name: "created_at", type: "date" },
+      { name: "is_static", type: "bool" },
       { name: "is_active", type: "bool" }
     ],
     indexes: [

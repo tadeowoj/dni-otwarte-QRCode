@@ -63,9 +63,10 @@ Uwagi: konta nauczycieli dodaje admin recznie w PocketBase. Logowanie nauczyciel
 | `station_code` | text | wymagane |
 | `teacher_id` | text | wymagane |
 | `created_at` | date | data wygenerowania |
+| `is_static` | bool | czy kod zostaje aktywny po skutecznym skanie |
 | `is_active` | bool | czy kod jest aktualnie aktywny |
 
-Uwagi: jeden nauczyciel moze miec tylko jeden aktywny kod QR naraz. Nowy kod QR jest aktywny do pierwszego skutecznego skanu przyznajacego punkt; wtedy `is_active` zmienia sie na `false`. Skan duplikatu stanowiska przez tego samego uczestnika nie dezaktywuje kodu.
+Uwagi: jeden nauczyciel moze miec tylko jeden aktywny kod QR naraz. Kod jednorazowy jest aktywny do pierwszego skutecznego skanu przyznajacego punkt; wtedy `is_active` zmienia sie na `false`. Kod z `is_static=true` zostaje aktywny po skutecznym skanie i moze byc uzyty przez wielu uczestnikow, ale jeden uczestnik nadal zalicza dane stanowisko tylko raz. Skan duplikatu stanowiska przez tego samego uczestnika nie dezaktywuje kodu.
 
 ## Kolekcja: `scans`
 

@@ -22,6 +22,8 @@ Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgady
 - W widoku rejestracji uczestnika dodano wymagany checkbox zgody na przetwarzanie danych osobowych.
 - Checkbox linkuje do nowej statycznej strony `frontend/public/polityka-prywatnosci.html`, publikowanej jako `/polityka-prywatnosci.html`.
 - Rejestracja jest blokowana po stronie frontendu, jesli zgoda nie zostanie zaznaczona.
+- W panelu nauczyciela dodano checkbox `Statyczny kod`; nowe QR moga byc jednorazowe albo statyczne przez flage `qr_codes.is_static`.
+- Jeden nauczyciel nadal ma maksymalnie jeden aktywny kod QR naraz, a statyczny kod pozostaje aktywny po skutecznym skanie wielu uczestnikow.
 
 # Kontekst projektu
 Calosc wymagan funkcjonalnych jest opisana w `PROJEKT.md`.
@@ -48,6 +50,7 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - W PocketBase recznie dodac realne rekordy `stations` i `teachers` z mapowaniem `1 nauczyciel = 1 stanowisko`.
 - Wykonac reczny smoke test flow: rejestracja -> modal PIN -> dashboard, logowanie `nick + PIN`, konto bez PIN (`PIN_NOT_SET`), bledny PIN.
 - Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR i blokade jednego aktywnego kodu.
+- Wykonac smoke test nauczyciela dla checkboxa `Statyczny kod`: zwykly QR znika po pierwszym skutecznym skanie, statyczny QR zostaje aktywny po skanach roznych uczestnikow, a duplikat tego samego uczestnika nie dodaje punktu.
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
 - Wykonac reczny smoke test checkboxa zgody w rejestracji: brak zaznaczenia blokuje submit, zaznaczenie przepuszcza dalej do ustawienia PIN-u.
