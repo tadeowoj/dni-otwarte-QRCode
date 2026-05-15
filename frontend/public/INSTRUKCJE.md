@@ -47,7 +47,7 @@ Po zalogowaniu zobaczysz panel główny:
 |---------|-----------|
 | **Twój Avatar** | Pierwsza litera Twojego nicku |
 | **Nick i Szkoła** | Twoje dane |
-| **Pasek Postępu** | Ile kodów już zebrałeś / ile potrzebujesz |
+| **Pasek Postępu** | Ile kodów już zebrałeś / maksymalna liczba kodów |
 | **Liczby statystyk** | Punkty lidera i liczba graczy |
 | **Stanowiska** | Lista wszystkich stanowisk do odwiedzenia |
 
@@ -81,15 +81,12 @@ Po zalogowaniu zobaczysz panel główny:
 
 ### Cel:
 
-- Musisz zebrać **wszystkie kody QR**
-- Gdy zaliczysz wszystkie, zobaczysz ekran ze wiadomością:
-  - **„SZACUN! 🏆"**
-  - Wyświetli się Twój nick i szkoła
+- Zbierz jak największą liczbę **kodów QR**!
+- Im więcej kodów QR zbierzesz, tym większa szansa na wygraną!
 
 ### Odbiór Nagrody:
 
-1. Udaj się na halę sportową.
-2. Poczekaj na losowanie nagród i ogłoszenie wyników.
+1. Sposób losowania nagród zostanie podany w trakcie trwania dni otwartych.
 
 ---
 
@@ -128,17 +125,8 @@ Na Twoim panelu widzisz:
 - [ ] Zarejestruj się / Zaloguj
 - [ ] Ustaw PIN (jeśli nowy gracz)
 - [ ] Obejrzyj panel główny
-- [ ] Odwiedź wszystkie stanowiska
-- [ ] Zbierz wszystkie kody QR
-- [ ] Weź udział w losowaniu o nagrody! 🎉
-
----
-
-## 🤝 Potrzebujesz Pomocy?
-
-- 👤 Poszukaj **organizatora**
-- 📋 Zapytaj o **stanowiska** nauczyciela
-- 💬 Poproś o **nowy kod QR** jeśli bieżący się nie skanuje
+- [ ] Odwiedzaj przygotowane stanowiska z kodami QR
+- [ ] Zbierz jak największą liczbę kodów QR
 
 ---
 
