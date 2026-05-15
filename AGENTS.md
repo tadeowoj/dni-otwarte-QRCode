@@ -18,6 +18,11 @@ Projekt ma byc utrzymywany tak, zeby kolejne sesje mogly wejsc w temat bez zgady
 - Wlacz automatyczne usuwanie galezi po merge PR.
 - Po merge PR pobierz najnowsze zmiany i usun zbedne worktree.
 
+## Stan projektu 2026-05-15
+- W widoku rejestracji uczestnika dodano wymagany checkbox zgody na przetwarzanie danych osobowych.
+- Checkbox linkuje do nowej statycznej strony `frontend/public/polityka-prywatnosci.html`, publikowanej jako `/polityka-prywatnosci.html`.
+- Rejestracja jest blokowana po stronie frontendu, jesli zgoda nie zostanie zaznaczona.
+
 # Kontekst projektu
 Calosc wymagan funkcjonalnych jest opisana w `PROJEKT.md`.
 Stos technologiczny: frontend Vite (widoki `index.html` i `admin.html`), backend PocketBase/SQLite pod `https://pocketbase.zsoiz-czyzew.pl` plus starszy backend Google Apps Script jako kontekst historyczny.
@@ -45,6 +50,8 @@ Backend PocketBase trzyma migracje w `pocketbase/pb_migrations`, custom route w 
 - Wykonac smoke test nauczyciela: logowanie bez `station_code` (blad), pobranie panelu, wielokrotne generowanie QR i blokade jednego aktywnego kodu.
 - Wykonac smoke test skanowania nowego `?qr_token=...` i walidacji `INVALID_QR_TOKEN` dla nieistniejacego tokenu.
 - Wykonac reczny smoke test rejestracji dla nowego dropdownu szkol: brak wyboru (blokada) i poprawny wybor z listy.
+- Wykonac reczny smoke test checkboxa zgody w rejestracji: brak zaznaczenia blokuje submit, zaznaczenie przepuszcza dalej do ustawienia PIN-u.
+- Sprawdzic recznie link `Polityka Prywatnosci` w formularzu rejestracji i otwieranie strony `/polityka-prywatnosci.html`.
 - Sprawdzic recznie odpowiedz API `register` dla wartosci `school_name` spoza listy (`INVALID_SCHOOL_NAME`).
 - Potwierdzic sortowanie tabeli admina po kolumnach (Kody, Szkoła, Status, Nagroda) z aktualnym PIN admina.
 - Wykonac reczny smoke test dashboardu uczestnika: czy live statystyki (`Uczestnik na prowadzeniu ma punktów:`, `Uczestnicy w grze`) laduja sie od razu i odswiezaja co 5 sekund bez reloadu.

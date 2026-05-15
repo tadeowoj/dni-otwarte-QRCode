@@ -502,6 +502,7 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
   const name = document.getElementById("reg-name").value.trim();
   const nick = document.getElementById("reg-nick").value.trim();
   const school = document.getElementById("reg-school").value.trim();
+  const consentAccepted = document.getElementById("reg-consent").checked;
 
   if (!STATE.schoolsLoaded) {
     showToast("Lista szkol nie jest dostepna. Odswiez strone i sprobuj ponownie.", true);
@@ -510,6 +511,11 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
 
   if (!name || !nick || !school) {
     showToast("Uzupelnij wszystkie pola, w tym wybor szkoly.", true);
+    return;
+  }
+
+  if (!consentAccepted) {
+    showToast("Zaznacz zgode na przetwarzanie danych, aby sie zarejestrowac.", true);
     return;
   }
 
